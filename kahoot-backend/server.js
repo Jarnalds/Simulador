@@ -21,7 +21,7 @@ app.use(cors());
 // Configuración de Socket.IO para permitir conexiones desde cualquier origen
 const io = socketIo(server, {
     cors: {
-        origin: "*", // Permite conexiones desde cualquier origen (Frontend en Netlify, etc.)
+       origin: "https://jarnalds.github.io", // ¡Asegúrate de que esta URL sea exactamente la de tu frontend!
         methods: ["GET", "POST"]
     }
 });

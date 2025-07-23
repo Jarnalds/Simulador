@@ -14,6 +14,14 @@ const io = socketIo(server, {
     }
 });
 
+// *** AÑADE ESTAS LÍNEAS ***
+// Ruta simple para verificar que el servidor está funcionando
+app.get('/', (req, res) => {
+    res.send('Servidor de Mini Kahoot (Backend) está funcionando.');
+});
+// *************************
+
+
 const PORT = process.env.PORT || 3000;
 
 let gameStarted = false;

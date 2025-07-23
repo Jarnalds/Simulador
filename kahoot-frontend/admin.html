@@ -17,6 +17,7 @@
         <div id="adminControls" style="display: none;">
             <p>Admin Conectado: <strong id="adminNameDisplay"></strong></p>
             <button id="startGameBtn">Iniciar Juego</button>
+            <button id="downloadResultsBtn" style="margin-left: 10px;">Descargar Resultados CSV</button>
             <h2>Jugadores Conectados:</h2>
             <ul id="playerList">
                 </ul>
@@ -27,7 +28,6 @@
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         // backend/kahoot-frontend/admin.html script
-        // *** IMPORTANTE: Cambia esta URL por la de tu backend desplegado (Render, Heroku, etc.) ***
         const socket = io('https://backend-6ya4.onrender.com'); // ¡Tu URL de Render!
 
         const adminNameInput = document.getElementById('adminNameInput');
@@ -36,11 +36,10 @@
         const adminControls = document.getElementById('adminControls');
         const adminNameDisplay = document.getElementById('adminNameDisplay');
         const startGameBtn = document.getElementById('startGameBtn');
-        // *** ELIMINAR LA REFERENCIA A nextQuestionBtn: ***
-        // const nextQuestionBtn = document.getElementById('nextQuestionBtn');
         const playerList = document.getElementById('playerList');
         const adminMessages = document.getElementById('adminMessages');
-
+        // *** REFERENCIA AL NUEVO BOTÓN ***
+        const downloadResultsBtn = document.getElementById('downloadResultsBtn');
         connectAdminBtn.addEventListener('click', () => {
             const name = adminNameInput.value.trim();
             if (name) {
@@ -56,8 +55,12 @@
             socket.emit('startGame');
         });
 
-        // *** ELIMINAR EL LISTENER PARA nextQuestionBtn ***
-
+        // *** LISTENER PARA EL NUEVO BOTÓN ***
+        downloadResultsBtn.addEventListener('click', () => {
+            // Asegúrate de usar la URL REAL de tu backend en Render
+            const backendUrl = 'https://backend-6ya4.onrender.com'; // ¡Tu URL de Render!
+            window.open(`${backendUrl}/download-results`, '_blank');
+        });
         socket.on('adminConnected', () => {
             connectionForm.style.display = 'none';
             adminControls.style.display = 'block';
@@ -91,19 +94,10 @@
             adminMessages.textContent = `${player.name} ha dejado el juego.`;
         });
 
-        // *** CAMBIO: gameStartedAdmin ahora solo adapta mensaje del admin ***
         socket.on('gameStartedAdmin', () => {
             adminMessages.textContent = '¡Juego Iniciado! Los jugadores ya están recibiendo sus preguntas y avanzarán por su cuenta.';
             startGameBtn.style.display = 'none';
-            // ELIMINAR: nextQuestionBtn.style.display = 'block';
-            // ELIMINAR: nextQuestionBtn.disabled = false;
         });
-
-        // *** ELIMINAR EL EVENTO 'newQuestion' para el admin (ya no las recibe) ***
-
-        // *** ELIMINAR EVENTOS YA NO RELEVANTES PARA ADMIN CON AVANCE INDEPENDIENTE ***
-        // socket.on('allQuestionsSent', () => { ... });
-        // socket.on('noPlayersForNextQuestion', (message) => { ... });
 
         socket.on('error', (message) => {
             adminMessages.textContent = `Error del servidor: ${message}`;
@@ -114,7 +108,7 @@
             }
         });
 
-        socket.on('adminDisconnected', () => { // Esto puede ocurrir si el admin se refresca
+        socket.on('adminDisconnected', () => {
             alert('El administrador se ha desconectado. El juego ha terminado para los jugadores si el admin no se reconecta pronto.');
             window.location.reload();
         });

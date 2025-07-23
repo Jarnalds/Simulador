@@ -83,6 +83,37 @@ io.on('connection', (socket) => {
         }
     });
 
+// backend/kahoot-backend/server.js
+
+// ... (código existente hasta el final del io.on('connection', ...) bloque) ...
+
+// Nuevo endpoint para descargar resultados en CSV
+app.get('/download-results', (req, res) => {
+    // Asegúrate de que el juego haya terminado o que quieras los resultados en cualquier momento
+    if (Object.keys(players).length === 0) {
+        return res.status(404).send('No hay resultados de jugadores para descargar.');
+    }
+
+    let csvContent = "Nombre,Rol,Puntuacion\n"; // Encabezados del CSV
+
+    // Itera sobre los jugadores para construir el contenido CSV
+    Object.values(players).forEach(player => {
+        csvContent += `${player.name},${player.role},${player.score}\n`;
+    });
+
+    // Configura las cabeceras para que el navegador descargue el archivo
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="resultados_kahoot.csv"');
+    res.status(200).send(csvContent);
+    console.log('Archivo CSV de resultados solicitado y enviado.');
+});
+
+
+// 8. Iniciar el servidor
+server.listen(PORT, () => {
+    console.log(`Servidor de Kahoot escuchando en http://localhost:${PORT}`);
+});
+
     // Evento 'startGame': El administrador inicia el juego
     socket.on('startGame', () => {
         // Solo el admin puede iniciar el juego y solo si no ha comenzado ya

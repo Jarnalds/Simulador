@@ -32,8 +32,7 @@
                 </div>
             <p>Puntuación: <span id="playerScore">0</span></p>
             <div id="result"></div>
-            <button id="nextQuestionPlayerBtn" style="display: none;">Siguiente Pregunta</button>
-        </div>
+            </div>
 
         <div id="game-finished" style="display: none;">
             <h2>¡Juego Terminado! 🎉</h2>
@@ -57,7 +56,7 @@
         const joinForm = document.getElementById('join-form');
         const gameLobby = document.getElementById('game-lobby');
         const quizContainer = document.getElementById('quiz-container');
-        const gameFinished = document.getElementById('game-finished'); // Nueva referencia
+        const gameFinished = document.getElementById('game-finished');
 
         const playerNameDisplay = document.getElementById('playerNameDisplay');
         const playerRoleDisplay = document.getElementById('playerRoleDisplay');
@@ -66,8 +65,9 @@
         const optionsContainer = document.getElementById('options-container');
         const playerScoreElement = document.getElementById('playerScore');
         const resultElement = document.getElementById('result');
-        const finalPlayerScoreElement = document.getElementById('finalPlayerScore'); // Nueva referencia
-        const nextQuestionPlayerBtn = document.getElementById('nextQuestionPlayerBtn'); // Referencia al nuevo botón
+        const finalPlayerScoreElement = document.getElementById('finalPlayerScore');
+        // *** ELIMINAR LA REFERENCIA A nextQuestionPlayerBtn: ***
+        // const nextQuestionPlayerBtn = document.getElementById('nextQuestionPlayerBtn');
 
         let currentQuestionId = null;
 
@@ -80,19 +80,18 @@
                 playerRoleDisplay.textContent = role;
                 joinForm.style.display = 'none';
                 gameLobby.style.display = 'block';
-                playerMessages.textContent = ''; // Limpiar mensajes de error anteriores
+                playerMessages.textContent = '';
             } else {
                 playerMessages.textContent = 'Por favor, ingresa tu nombre y selecciona un rol.';
             }
         });
 
-        // *** EVENTO: gameStarted se dispara si el juego ya empezó cuando el jugador se une ***
         socket.on('gameStarted', () => {
             gameLobby.style.display = 'none';
             quizContainer.style.display = 'block';
             resultElement.textContent = '¡El juego ha comenzado! Esperando tu primera pregunta...';
             playerScoreElement.textContent = '0';
-            nextQuestionPlayerBtn.style.display = 'block'; // Ocultar al inicio
+            // ELIMINAR: nextQuestionPlayerBtn.style.display = 'none';
         });
 
         socket.on('waitingForGameToStart', () => {
@@ -104,12 +103,13 @@
             questionElement.textContent = question.question;
             optionsContainer.innerHTML = '';
             resultElement.textContent = ''; // Limpiar resultado de pregunta anterior
-            nextQuestionPlayerBtn.style.display = 'true'; // Ocultar botón Siguiente hasta responder
+            // ELIMINAR: nextQuestionPlayerBtn.style.display = 'none'; // Ocultar botón Siguiente hasta responder
 
             question.options.forEach(option => {
                 const button = document.createElement('button');
                 button.textContent = option;
                 button.classList.add('option-button');
+                // Al hacer clic, enviamos la respuesta
                 button.addEventListener('click', () => submitAnswer(question.id, option, button));
                 optionsContainer.appendChild(button);
             });
@@ -140,34 +140,23 @@
                     }
                 });
             }
-            // *** Mostrar el botón Siguiente Pregunta después de responder ***
-            nextQuestionPlayerBtn.style.display = 'block';
+            // *** ELIMINAR LA LÍNEA QUE MUESTRA EL BOTÓN Siguiente Pregunta ***
+            // nextQuestionPlayerBtn.style.display = 'block';
         });
 
-        // *** Evento que indica que el jugador puede pedir la siguiente pregunta ***
-        socket.on('readyForNextQuestion', () => {
-            // Este evento se usa para asegurar que el botón "Siguiente Pregunta" se muestre.
-            // Ya lo manejamos en 'answerResult'
-        });
+        // *** ELIMINAR ESTE EVENTO, YA NO ES NECESARIO EN EL CLIENTE ***
+        // socket.on('readyForNextQuestion', () => { ... });
 
-        // *** LISTENER para el botón Siguiente Pregunta del jugador ***
-        nextQuestionPlayerBtn.addEventListener('click', () => {
-            socket.emit('requestNextQuestionForPlayer'); // El jugador solicita la siguiente pregunta
-            nextQuestionPlayerBtn.disabled = true; // Deshabilitar para evitar múltiples clics
-            resultElement.textContent = ''; // Limpiar el resultado anterior
-            optionsContainer.querySelectorAll('.option-button').forEach(btn => {
-                btn.classList.remove('correct', 'wrong'); // Limpiar estilos de respuesta
-            });
-        });
+        // *** ELIMINAR EL LISTENER PARA nextQuestionPlayerBtn ***
+        // nextQuestionPlayerBtn.addEventListener('click', () => { ... });
 
-        // *** NUEVO EVENTO: Cuando el juego termina para este jugador individualmente ***
         socket.on('gameFinishedForPlayer', ({ finalScore }) => {
-            quizContainer.style.display = 'none'; // Ocultar el cuestionario
-            gameLobby.style.display = 'none'; // Ocultar el lobby
-            joinForm.style.display = 'none'; // Ocultar el formulario de unión
-            gameFinished.style.display = 'block'; // Mostrar la sección de juego terminado
-            finalPlayerScoreElement.textContent = finalScore; // Mostrar la puntuación final
-            nextQuestionPlayerBtn.style.display = 'none'; // Ocultar el botón si el juego terminó
+            quizContainer.style.display = 'none';
+            gameLobby.style.display = 'none';
+            joinForm.style.display = 'none';
+            gameFinished.style.display = 'block';
+            finalPlayerScoreElement.textContent = finalScore;
+            // ELIMINAR: nextQuestionPlayerBtn.style.display = 'none'; // Ocultar el botón si el juego terminó
         });
 
         socket.on('error', (message) => {
@@ -188,7 +177,7 @@
             joinForm.style.display = 'block';
             gameLobby.style.display = 'none';
             quizContainer.style.display = 'none';
-            gameFinished.style.display = 'none'; // Asegurarse de que esta también se oculte
+            gameFinished.style.display = 'none';
             playerNameInput.disabled = false;
             playerRoleSelect.disabled = false;
             joinGameBtn.disabled = false;

@@ -1,53 +1,36 @@
 // backend/kahoot-backend/server.js
+
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
+const cors = require('cors'); // Asegúrate de tener cors instalado (npm install cors)
+
+// *** IMPORTAR LAS PREGUNTAS DESDE EL NUEVO ARCHIVO ***
+const questionsByRole = require('./questions.js');
+// ****************************************************
 
 const app = express();
 const server = http.createServer(app);
+const PORT = process.env.PORT || 3000;
+
+// Middleware para CORS
+app.use(cors());
+
 const io = socketIo(server, {
-    // Permite conexiones desde cualquier origen para desarrollo.
-    // En producción, deberías restringir esto a tu dominio de frontend.
     cors: {
-        origin: "*",
+        origin: "*", // Permite conexiones desde cualquier origen. En producción, especifica tu dominio.
         methods: ["GET", "POST"]
     }
 });
 
-// *** AÑADE ESTAS LÍNEAS ***
 // Ruta simple para verificar que el servidor está funcionando
 app.get('/', (req, res) => {
     res.send('Servidor de Mini Kahoot (Backend) está funcionando.');
 });
-// *************************
-
-
-const PORT = process.env.PORT || 3000;
 
 let gameStarted = false;
-let players = {}; // { socketId: { name: "...", role: "...", score: 0 } }
+let players = {}; // { socketId: { name: "...", role: "...", score: 0, currentQuestionIndex: 0 } }
 let adminSocketId = null;
-let currentQuestionIndex = 0;
-
-// Preguntas por rol
-const questionsByRole = {
-    'programador': [
-        { id: 1, question: "¿Qué significa DRY?", options: ["Do Repeat Yourself", "Don't Repeat Yourself", "Directly Read Your code"], answer: "Don't Repeat Yourself" },
-        { id: 2, question: "¿Qué lenguaje es Python principalmente?", options: ["Compilado", "Interpretado", "Transpilado"], answer: "Interpretado" },
-        { id: 3, question: "¿Qué es un commit en Git?", options: ["Un cambio guardado", "Un error", "Una nueva rama"], answer: "Un cambio guardado" }
-    ],
-    'diseñador': [
-        { id: 4, question: "¿Qué es la tipografía?", options: ["Estudio de colores", "Arte de diseñar letras", "Diseño de logotipos"], answer: "Arte de diseñar letras" },
-        { id: 5, question: "¿Qué es UI/UX?", options: ["Interfaz de Usuario/Experiencia de Usuario", "Usabilidad Increíble/Diseño Extremo", "Unidad de Información/Experiencia Unificada"], answer: "Interfaz de Usuario/Experiencia de Usuario" },
-        { id: 6, question: "¿Qué color se asocia a menudo con la pasión?", options: ["Azul", "Rojo", "Verde"], answer: "Rojo" }
-    ],
-    'comunicador': [
-        { id: 7, question: "¿Qué es el storytelling?", options: ["Contar cuentos", "Analizar datos", "Diseñar gráficos"], answer: "Contar cuentos" },
-        { id: 8, question: "¿Qué es un público objetivo?", options: ["Grupo de amigos", "Personas a las que va dirigido un mensaje", "Equipo de marketing"], answer: "Personas a las que va dirigido un mensaje" },
-        { id: 9, question: "¿Cuál es el propósito principal de un titular en una noticia?", options: ["Ser largo y detallado", "Captar la atención y resumir el contenido", "Incluir muchas palabras clave"], answer: "Captar la atención y resumir el contenido" }
-    ]
-    // ¡Añade más roles y preguntas como necesites!
-};
 
 io.on('connection', (socket) => {
     console.log('Nuevo usuario conectado:', socket.id);
@@ -55,24 +38,29 @@ io.on('connection', (socket) => {
     socket.on('joinGame', ({ name, role, isAdmin }) => {
         if (isAdmin) {
             if (adminSocketId) {
-                socket.emit('error', 'Ya hay un administrador conectado. Solo se permite uno.');
+                socket.emit('error', 'Ya hay un administrador conectado.');
                 return;
             }
             adminSocketId = socket.id;
-            socket.emit('adminConnected');
+            io.to(adminSocketId).emit('adminConnected');
+            io.to(adminSocketId).emit('currentPlayers', Object.values(players).map(p => ({ id: p.id, name: p.name, role: p.role })));
             console.log(`Admin ${name} conectado: ${socket.id}`);
-            io.to(adminSocketId).emit('currentPlayers', Object.values(players));
         } else {
             if (players[socket.id]) {
                 socket.emit('error', 'Ya estás conectado al juego.');
                 return;
             }
-            players[socket.id] = { id: socket.id, name, role, score: 0 }; // Almacenar socket.id dentro del objeto jugador
+            players[socket.id] = { id: socket.id, name, role, score: 0, currentQuestionIndex: 0 };
             console.log(`Jugador ${name} (${role}) conectado: ${socket.id}`);
             io.emit('playerJoined', { id: socket.id, name, role });
+            if (adminSocketId) { // Notificar al admin sobre el nuevo jugador
+                io.to(adminSocketId).emit('playerJoined', { id: socket.id, name, role });
+            }
             if (gameStarted) {
-                socket.emit('gameAlreadyStarted');
-                io.to(socket.id).emit('waitingForNextQuestion');
+                io.to(socket.id).emit('gameStarted');
+                sendQuestionToPlayer(socket.id);
+            } else {
+                io.to(socket.id).emit('waitingForGameToStart');
             }
         }
     });
@@ -84,10 +72,17 @@ io.on('connection', (socket) => {
                 return;
             }
             gameStarted = true;
-            currentQuestionIndex = 0;
+
             io.emit('gameStarted');
-            console.log('Juego iniciado por el admin.');
-            sendQuestionToPlayers();
+            console.log('Juego iniciado por el admin. Enviando primera pregunta a cada jugador.');
+
+            Object.values(players).forEach(player => {
+                player.currentQuestionIndex = 0;
+                sendQuestionToPlayer(player.id);
+            });
+
+            io.to(adminSocketId).emit('gameStartedAdmin');
+
         } else if (socket.id !== adminSocketId) {
             socket.emit('error', 'Solo el administrador puede iniciar el juego.');
         } else {
@@ -95,10 +90,11 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('requestNextQuestion', () => {
-        if (socket.id === adminSocketId && gameStarted) {
-            currentQuestionIndex++;
-            sendQuestionToPlayers();
+    socket.on('requestNextQuestionForPlayer', () => {
+        const player = players[socket.id];
+        if (player && gameStarted) {
+            player.currentQuestionIndex++;
+            sendQuestionToPlayer(socket.id);
         }
     });
 
@@ -109,66 +105,62 @@ io.on('connection', (socket) => {
         const roleQuestions = questionsByRole[player.role];
         if (!roleQuestions) return;
 
-        const question = roleQuestions.find(q => q.id === questionId);
-        if (!question) return;
+        const currentQuestion = roleQuestions[player.currentQuestionIndex];
+        if (!currentQuestion || currentQuestion.id !== questionId) {
+             socket.emit('error', 'Esta pregunta ya no es válida o ya fue respondida.');
+             return;
+        }
 
-        if (selectedOption === question.answer) {
+        if (selectedOption === currentQuestion.answer) {
             player.score++;
-            socket.emit('answerResult', { correct: true, score: player.score, correctOption: question.answer });
+            socket.emit('answerResult', { correct: true, score: player.score, correctOption: currentQuestion.answer });
             console.log(`${player.name} (${player.role}) respondió correctamente. Puntuación: ${player.score}`);
         } else {
-            socket.emit('answerResult', { correct: false, correctOption: question.answer });
+            socket.emit('answerResult', { correct: false, correctOption: currentQuestion.answer });
             console.log(`${player.name} (${player.role}) respondió incorrectamente.`);
         }
         io.to(socket.id).emit('disableOptions');
+
+        setTimeout(() => {
+            io.to(socket.id).emit('readyForNextQuestion');
+        }, 1500);
     });
+
 
     socket.on('disconnect', () => {
         console.log('Usuario desconectado:', socket.id);
         if (socket.id === adminSocketId) {
             adminSocketId = null;
             gameStarted = false;
-            players = {};
-            currentQuestionIndex = 0;
-            io.emit('adminDisconnected');
-            console.log('Administrador desconectado. Juego reseteado y jugadores desconectados.');
+            Object.values(players).forEach(player => {
+                io.to(player.id).emit('adminDisconnectedNotification', 'El administrador se ha desconectado. Tu juego puede continuar.');
+            });
+            console.log('Administrador desconectado.');
         } else if (players[socket.id]) {
             const disconnectedPlayer = players[socket.id];
             delete players[socket.id];
             io.emit('playerLeft', { id: socket.id, name: disconnectedPlayer.name });
+            if (adminSocketId) { // Notificar al admin si está conectado
+                io.to(adminSocketId).emit('playerLeft', { id: socket.id, name: disconnectedPlayer.name });
+            }
             console.log(`Jugador ${disconnectedPlayer.name} ha dejado el juego.`);
         }
     });
 
-    function sendQuestionToPlayers() {
-        const activePlayers = Object.values(players);
-        if (activePlayers.length === 0) {
-            io.to(adminSocketId).emit('noPlayersForNextQuestion', 'No hay jugadores activos para enviar la siguiente pregunta.');
-            console.log("No hay jugadores para enviar preguntas.");
-            return;
-        }
+    function sendQuestionToPlayer(playerId) {
+        const player = players[playerId];
+        if (!player) return;
 
-        let allPlayersFinished = true;
+        const playerRoleQuestions = questionsByRole[player.role];
 
-        activePlayers.forEach(player => {
-            const playerRoleQuestions = questionsByRole[player.role];
-
-            if (playerRoleQuestions && currentQuestionIndex < playerRoleQuestions.length) {
-                const questionToSend = { ...playerRoleQuestions[currentQuestionIndex] };
-                delete questionToSend.answer; // ¡Importante! No enviar la respuesta al cliente
-                io.to(player.id).emit('newQuestion', questionToSend);
-                allPlayersFinished = false; // Al menos un jugador aún tiene preguntas
-            } else {
-                io.to(player.id).emit('gameFinishedForPlayer', { finalScore: player.score });
-            }
-        });
-
-        if (allPlayersFinished) {
-            io.to(adminSocketId).emit('allQuestionsSent');
-            console.log('Todas las preguntas disponibles han sido enviadas o los jugadores han terminado.');
-            gameStarted = false;
-            // Opcional: reiniciar currentQuestionIndex si el admin puede iniciar un nuevo juego
-            // currentQuestionIndex = 0;
+        if (playerRoleQuestions && player.currentQuestionIndex < playerRoleQuestions.length) {
+            const questionToSend = { ...playerRoleQuestions[player.currentQuestionIndex] };
+            delete questionToSend.answer;
+            io.to(playerId).emit('newQuestion', questionToSend);
+            console.log(`Enviando pregunta ${questionToSend.id} a ${player.name} (${player.role})`);
+        } else {
+            io.to(playerId).emit('gameFinishedForPlayer', { finalScore: player.score });
+            console.log(`${player.name} (${player.role}) ha terminado sus preguntas con una puntuación de ${player.score}.`);
         }
     }
 });

@@ -92,7 +92,7 @@
             quizContainer.style.display = 'block';
             resultElement.textContent = '¡El juego ha comenzado! Esperando tu primera pregunta...';
             playerScoreElement.textContent = '0';
-            nextQuestionPlayerBtn.style.display = 'none'; // Ocultar al inicio
+            nextQuestionPlayerBtn.style.display = 'block'; // Ocultar al inicio
         });
 
         socket.on('waitingForGameToStart', () => {
@@ -104,7 +104,7 @@
             questionElement.textContent = question.question;
             optionsContainer.innerHTML = '';
             resultElement.textContent = ''; // Limpiar resultado de pregunta anterior
-            nextQuestionPlayerBtn.style.display = 'none'; // Ocultar botón Siguiente hasta responder
+            nextQuestionPlayerBtn.style.display = 'true'; // Ocultar botón Siguiente hasta responder
 
             question.options.forEach(option => {
                 const button = document.createElement('button');

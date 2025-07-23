@@ -1,17 +1,18 @@
 {
   "name": "kahoot-backend",
   "version": "1.0.0",
-  "description": "Backend para Mini Kahoot con Socket.IO",
+  "description": "Backend for Mini Kahoot game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon server.js" // Asegúrate de que esto apunte a tu archivo principal del servidor
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.3",
     "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
   }
 }

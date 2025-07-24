@@ -138,9 +138,21 @@ io.on('connection', (socket) => {
                 io.to(adminSocketId).emit('playerJoined', { id: socket.id, name, role });
             }
 
-            if (gameStarted) { // Si el juego ya inició, enviar la primera pregunta
-                io.to(socket.id).emit('gameStarted');
-                sendQuestionToPlayer(socket.id);
+            // Aquí YA NO enviamos la primera pregunta si el juego está iniciado.
+            // Ahora el jugador recibirá el evento 'gameStarted' con los detalles del escenario y luego
+            // enviará 'playerReadyForQuestions' cuando esté listo.
+            if (gameStarted && currentScenarioId) {
+                const scenarioInfo = gameData[currentScenarioId];
+                if (scenarioInfo) {
+                    io.to(socket.id).emit('gameStarted', {
+                        scenarioName: scenarioInfo.name,
+                        scenarioDescription: scenarioInfo.description
+                    });
+                    io.to(socket.id).emit('playGameStartSound');
+                } else {
+                    io.to(socket.id).emit('error', 'Error: Escenario no encontrado o incompleto.');
+                    console.error(`Error: Escenario ${currentScenarioId} no encontrado para nuevo jugador que se une a juego ya iniciado.`);
+                }
             } else {
                 io.to(socket.id).emit('waitingForGameToStart');
             }
@@ -165,13 +177,11 @@ io.on('connection', (socket) => {
         }
     });
 
-   // ... (dentro de io.on('connection', (socket) => { ... ))
-
     // Evento 'startGame': El administrador inicia el juego
     socket.on('startGame', () => {
         console.log(`Evento startGame recibido de ${socket.id}. AdminSocketId: ${adminSocketId}, GameStarted: ${gameStarted}`);
         if (socket.id === adminSocketId && !gameStarted) {
-            if (!currentScenarioId) {
+            if (!currentScenarioId) { // Verificar que se haya seleccionado un escenario
                 io.to(adminSocketId).emit('error', 'Por favor, selecciona un escenario antes de iniciar el juego.');
                 console.log('Admin intentó iniciar juego sin escenario seleccionado.');
                 return;
@@ -185,18 +195,29 @@ io.on('connection', (socket) => {
             acceptNewPlayers = false; // Cierra las inscripciones una vez que el juego ha iniciado
             console.log('Inscripciones cerradas: acceptNewPlayers = false');
 
-            // --- CAMBIOS AQUÍ ---
-            const scenarioName = gameData[currentScenarioId].name; // Obtener el nombre amigable del escenario
-            io.emit('gameStarted', { scenarioName: scenarioName }); // Enviar el nombre del escenario a todos los jugadores
-            io.emit('playGameStartSound'); // Notificar a los clientes que reproduzcan el sonido de inicio
-            // --- FIN CAMBIOS ---
+            const scenarioInfo = gameData[currentScenarioId];
+            if (scenarioInfo && scenarioInfo.name && scenarioInfo.description) { // Asegúrate de que la descripción exista
+                // Modificado: Ahora enviamos el nombre Y la descripción del escenario
+                io.emit('gameStarted', {
+                    scenarioName: scenarioInfo.name,
+                    scenarioDescription: scenarioInfo.description
+                });
+                io.emit('playGameStartSound'); // Notificar a los clientes que reproduzcan el sonido de inicio
+                console.log(`Juego iniciado con escenario "${scenarioInfo.name}". Enviando detalles a jugadores.`);
+            } else {
+                io.to(adminSocketId).emit('error', 'Error: El escenario seleccionado no tiene información completa (nombre o descripción).');
+                console.error(`Error: Escenario ${currentScenarioId} no encontrado o incompleto en gameData.`);
+                gameStarted = false; // Resetear estado si hay un error crítico
+                acceptNewPlayers = true;
+                return;
+            }
 
-            console.log('Juego iniciado por el admin. Enviando primera pregunta a cada jugador.');
-
-            Object.values(players).forEach(player => {
-                player.currentQuestionIndex = 0; // Reiniciar índice para el nuevo juego
-                sendQuestionToPlayer(player.id);
-            });
+            // --- IMPORTANTE: ELIMINAR O COMENTAR ESTAS LÍNEAS AQUÍ ---
+            // Object.values(players).forEach(player => {
+            //     player.currentQuestionIndex = 0;
+            //     sendQuestionToPlayer(player.id); // ¡NO enviamos la primera pregunta aquí!
+            // });
+            // --- FIN DE LA ELIMINACIÓN ---
 
             io.to(adminSocketId).emit('gameStartedAdmin');
 
@@ -209,7 +230,21 @@ io.on('connection', (socket) => {
         }
     });
 
-// ... (resto de tu server.js)
+    // NUEVO EVENTO: El jugador notifica que está listo para las preguntas
+    socket.on('playerReadyForQuestions', () => {
+        const player = players[socket.id];
+        if (player && gameStarted && currentScenarioId) {
+            console.log(`Jugador ${player.name} (${player.id}) está listo para las preguntas del escenario ${currentScenarioId}.`);
+            // Asegúrate de que el índice de pregunta esté en 0 solo si es el inicio del juego para ese jugador.
+            // Esto ya debería estar manejado cuando el jugador se une o el admin inicia el juego.
+            // Aquí simplemente enviamos la pregunta actual/primera.
+            sendQuestionToPlayer(socket.id);
+        } else {
+            console.log(`playerReadyForQuestions recibido de ${socket.id} pero no válido (jugador no encontrado, juego no iniciado o escenario no seleccionado).`);
+            socket.emit('error', 'No estás en un estado válido para recibir preguntas.');
+        }
+    });
+
 
     // Evento 'submitAnswer': Un jugador envía su respuesta a una pregunta
     socket.on('submitAnswer', ({ questionId, selectedOption }) => {
@@ -323,10 +358,8 @@ io.on('connection', (socket) => {
 
         if (allPlayersFinished) {
             console.log('Todos los jugadores han terminado. Recopilando resultados finales.');
-            // Aquí puedes decidir si quieres que el juego se "cierre" completamente o se permita una nueva partida
             gameStarted = false;
             acceptNewPlayers = false; // Cierra las inscripciones al finalizar el juego
-            // currentScenarioId = null; // Podrías resetear el escenario o dejarlo para descarga
             
             const finalScores = Object.values(players).map(player => ({
                 id: player.id,
@@ -341,9 +374,6 @@ io.on('connection', (socket) => {
             } else {
                 console.log('No hay administrador conectado para enviar los resultados finales.');
             }
-            // Después de enviar resultados, si el admin debe iniciar un nuevo juego,
-            // el admin debe resetear el estado y quizás acceptNewPlayers = true.
-            // io.emit('gameEnded'); // Emitir a todos que el juego ha terminado
         }
     }
 }); // Fin de io.on('connection')

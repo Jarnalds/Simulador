@@ -1,12 +1,9 @@
 // scenarios.js (o gameData.js)
-
 const gameData = {
     // Escenario 1: Lanzamiento de Producto
     'lanzamiento-producto': {
         name: 'Lanzamiento de Producto', // Nombre amigable del escenario
-        description: 'Te encuentras en la fase final de preparación para el gran lanzamiento de un innovador producto tecnológico...', // <-- ¡Asegúrate de que esta línea exista!
-        roles: 
-        roles: {
+        roles: { // Esta es la línea correcta para el objeto de roles
             'programador': [
                 { id: 'lp-prog-1', question: "¿Qué metodología de desarrollo es ideal para un lanzamiento rápido?", options: ["Waterfall", "Agile", "DevOps"], answer: "Agile" },
                 { id: 'lp-prog-2', question: "¿Qué se busca minimizar con un MVP?", options: ["Riesgo y tiempo de desarrollo", "Características y costo", "Marketing y publicidad"], answer: "Riesgo y tiempo de desarrollo" },
@@ -26,8 +23,7 @@ const gameData = {
     },
     // Escenario 2: Crisis de Ciberseguridad
     'crisis-ciberseguridad': {
-        name: 'Crisis de Ciberseguridad',
-        description: 'Te encuentras en la fase final de preparación para el gran lanzamiento de un innovador producto tecnológico...', // <-- ¡Asegúrate de que esta línea exista!
+        name: 'Crisis de Ciberseguridad',       
         roles: {
             'programador': [
                 { id: 'cc-prog-1', question: "¿Qué es un ataque de 'Phishing'?", options: ["Inyección de código malicioso", "Robo de datos a través de engaño", "Sobrecarga de servidor"], answer: "Robo de datos a través de engaño" },

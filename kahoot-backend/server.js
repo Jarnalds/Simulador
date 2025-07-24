@@ -21,7 +21,7 @@ console.log(`3. Servidor Express y Socket.IO configurados. Puerto asignado: ${PO
 // Middleware para habilitar CORS (Cross-Origin Resource Sharing)
 // Esto permite que tu frontend (ej. en Netlify) se conecte a tu backend (en Render)
 app.use(cors({
-  origin: '*', // Permite cualquier origen (NO USAR EN PRODUCCIÓN REAL)
+  origin: 'https://jarnalds.github.io', // Permite cualquier origen (NO USAR EN PRODUCCIÓN REAL)
   methods: ['GET', 'POST']
 }));
 

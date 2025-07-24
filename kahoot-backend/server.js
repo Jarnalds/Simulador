@@ -165,11 +165,13 @@ io.on('connection', (socket) => {
         }
     });
 
+   // ... (dentro de io.on('connection', (socket) => { ... ))
+
     // Evento 'startGame': El administrador inicia el juego
     socket.on('startGame', () => {
         console.log(`Evento startGame recibido de ${socket.id}. AdminSocketId: ${adminSocketId}, GameStarted: ${gameStarted}`);
         if (socket.id === adminSocketId && !gameStarted) {
-            if (!currentScenarioId) { // Verificar que se haya seleccionado un escenario
+            if (!currentScenarioId) {
                 io.to(adminSocketId).emit('error', 'Por favor, selecciona un escenario antes de iniciar el juego.');
                 console.log('Admin intentó iniciar juego sin escenario seleccionado.');
                 return;
@@ -183,7 +185,12 @@ io.on('connection', (socket) => {
             acceptNewPlayers = false; // Cierra las inscripciones una vez que el juego ha iniciado
             console.log('Inscripciones cerradas: acceptNewPlayers = false');
 
-            io.emit('gameStarted');
+            // --- CAMBIOS AQUÍ ---
+            const scenarioName = gameData[currentScenarioId].name; // Obtener el nombre amigable del escenario
+            io.emit('gameStarted', { scenarioName: scenarioName }); // Enviar el nombre del escenario a todos los jugadores
+            io.emit('playGameStartSound'); // Notificar a los clientes que reproduzcan el sonido de inicio
+            // --- FIN CAMBIOS ---
+
             console.log('Juego iniciado por el admin. Enviando primera pregunta a cada jugador.');
 
             Object.values(players).forEach(player => {
@@ -201,6 +208,8 @@ io.on('connection', (socket) => {
             console.log('Admin intentó iniciar juego ya iniciado.');
         }
     });
+
+// ... (resto de tu server.js)
 
     // Evento 'submitAnswer': Un jugador envía su respuesta a una pregunta
     socket.on('submitAnswer', ({ questionId, selectedOption }) => {

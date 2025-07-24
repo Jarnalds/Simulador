@@ -3,20 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kahoot Jugador</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Simulacros - Jugador</title> <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Mini Kahoot Jugador</h1>
-        <div id="join-form">
+        <h1>Simulacros - Jugador</h1> <div id="join-form">
             <input type="text" id="playerNameInput" placeholder="Tu Nombre" required>
             <select id="playerRoleSelect">
                 <option value="">Selecciona tu rol</option>
                 <option value="programador">Programador</option>
                 <option value="diseñador">Diseñador</option>
                 <option value="comunicador">Comunicador</option>
-                </select>
+            </select>
             <button id="joinGameBtn">Unirse al Juego</button>
             <div id="playerMessages" style="color: red; margin-top: 10px;"></div>
         </div>
@@ -24,30 +22,34 @@
         <div id="game-lobby" style="display: none;">
             <p>¡Bienvenido, <strong id="playerNameDisplay"></strong> (<strong id="playerRoleDisplay"></strong>)!</p>
             <p id="lobbyMessage">Esperando que el administrador inicie el juego...</p>
-        </div>
+            <p id="scenarioDisplay" style="display: none; font-weight: bold; margin-top: 10px;"></p> </div>
 
         <div id="quiz-container" style="display: none;">
             <h2 id="question"></h2>
             <div id="options-container" class="options-grid">
-                </div>
+            </div>
             <p>Puntuación: <span id="playerScore">0</span></p>
             <div id="result"></div>
-            </div>
+        </div>
 
         <div id="game-finished" style="display: none;">
-            <h2>¡Juego Terminado! 🎉</h2>
-            <p>Tu puntuación final es: <strong id="finalPlayerScore"></strong></p>
-            <p>¡Gracias por jugar!</p>
+            <h2>¡Simulacro Terminado! 🎉</h2> <p>Tu puntuación final es: <strong id="finalPlayerScore"></strong></p>
+            <p>¡Gracias por participar!</p>
             <button onclick="window.location.reload()">Jugar de Nuevo</button>
         </div>
     </div>
 
+    <audio id="gameStartAudio" src="sounds/game-start.mp3" preload="auto"></audio>
+
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         // backend/kahoot-frontend/player.html script
-        // *** IMPORTANTE: Cambia esta URL por la de tu backend desplegado (Render, Heroku, etc.) ***
-        const socket = io('https://simulador-0si7.onrender.com'); // ¡Tu URL de Render!
 
+        // *** IMPORTANTE: Cambia esta URL por la de tu backend desplegado (Render, Heroku, etc.) ***
+        const backendRenderUrl = 'https://simulador-drdo.onrender.com'; // ¡Tu URL de Render!
+        const socket = io(backendRenderUrl);
+
+        // Referencias a elementos del DOM
         const playerNameInput = document.getElementById('playerNameInput');
         const playerRoleSelect = document.getElementById('playerRoleSelect');
         const joinGameBtn = document.getElementById('joinGameBtn');
@@ -66,11 +68,15 @@
         const playerScoreElement = document.getElementById('playerScore');
         const resultElement = document.getElementById('result');
         const finalPlayerScoreElement = document.getElementById('finalPlayerScore');
-        // *** ELIMINAR LA REFERENCIA A nextQuestionPlayerBtn: ***
-        // const nextQuestionPlayerBtn = document.getElementById('nextQuestionPlayerBtn');
+        
+        // --- NUEVAS REFERENCIAS DE AUDIO Y ESCENARIO ---
+        const gameStartAudio = document.getElementById('gameStartAudio');
+        const scenarioDisplay = document.getElementById('scenarioDisplay');
+        // --- FIN NUEVAS REFERENCIAS ---
 
         let currentQuestionId = null;
 
+        // --- Listeners de Eventos DOM ---
         joinGameBtn.addEventListener('click', () => {
             const name = playerNameInput.value.trim();
             const role = playerRoleSelect.value;
@@ -86,16 +92,37 @@
             }
         });
 
-        socket.on('gameStarted', () => {
+        // --- Eventos de Socket.IO ---
+
+        // Modificado: Ahora recibe datos, incluyendo el nombre del escenario
+        socket.on('gameStarted', (data) => {
             gameLobby.style.display = 'none';
             quizContainer.style.display = 'block';
-            resultElement.textContent = '¡El juego ha comenzado! Esperando tu primera pregunta...';
+            resultElement.textContent = '¡El simulacro ha comenzado! Esperando tu primera pregunta...';
             playerScoreElement.textContent = '0';
-            // ELIMINAR: nextQuestionPlayerBtn.style.display = 'none';
+            
+            if (data && data.scenarioName) {
+                scenarioDisplay.textContent = `Escenario: ${data.scenarioName}`;
+                scenarioDisplay.style.display = 'block'; // Asegúrate de que el display esté en block
+            } else {
+                scenarioDisplay.style.display = 'none'; // Oculta si no hay nombre de escenario
+            }
+        });
+
+        // NUEVO: Listener para reproducir el sonido de inicio de juego
+        socket.on('playGameStartSound', () => {
+            if (gameStartAudio) {
+                gameStartAudio.play().catch(error => {
+                    console.error("Error al intentar reproducir el audio:", error);
+                    // Esto puede ocurrir si el navegador bloquea la reproducción automática sin interacción previa del usuario.
+                    // Puedes considerar añadir un mensaje al usuario si esto es un problema.
+                });
+            }
         });
 
         socket.on('waitingForGameToStart', () => {
-             lobbyMessage.textContent = 'Esperando que el administrador inicie el juego...';
+            lobbyMessage.textContent = 'Esperando que el administrador inicie el simulacro...';
+            scenarioDisplay.style.display = 'none'; // Ocultar el display del escenario mientras se espera
         });
 
         socket.on('newQuestion', (question) => {
@@ -103,8 +130,7 @@
             questionElement.textContent = question.question;
             optionsContainer.innerHTML = '';
             resultElement.textContent = ''; // Limpiar resultado de pregunta anterior
-            // ELIMINAR: nextQuestionPlayerBtn.style.display = 'none'; // Ocultar botón Siguiente hasta responder
-
+            
             question.options.forEach(option => {
                 const button = document.createElement('button');
                 button.textContent = option;
@@ -113,11 +139,11 @@
                 button.addEventListener('click', () => submitAnswer(question.id, option, button));
                 optionsContainer.appendChild(button);
             });
-            optionsContainer.querySelectorAll('.option-button').forEach(btn => btn.disabled = false);
+            optionsContainer.querySelectorAll('.option-button').forEach(btn => btn.disabled = false); // Habilitar botones
         });
 
         function submitAnswer(questionId, selectedOption, clickedButton) {
-            optionsContainer.querySelectorAll('.option-button').forEach(btn => btn.disabled = true);
+            optionsContainer.querySelectorAll('.option-button').forEach(btn => btn.disabled = true); // Deshabilitar todos los botones
             socket.emit('submitAnswer', { questionId, selectedOption });
         }
 
@@ -140,15 +166,8 @@
                     }
                 });
             }
-            // *** ELIMINAR LA LÍNEA QUE MUESTRA EL BOTÓN Siguiente Pregunta ***
-            // nextQuestionPlayerBtn.style.display = 'block';
+            // No hay botón "Siguiente", el backend avanza automáticamente
         });
-
-        // *** ELIMINAR ESTE EVENTO, YA NO ES NECESARIO EN EL CLIENTE ***
-        // socket.on('readyForNextQuestion', () => { ... });
-
-        // *** ELIMINAR EL LISTENER PARA nextQuestionPlayerBtn ***
-        // nextQuestionPlayerBtn.addEventListener('click', () => { ... });
 
         socket.on('gameFinishedForPlayer', ({ finalScore }) => {
             quizContainer.style.display = 'none';
@@ -156,7 +175,7 @@
             joinForm.style.display = 'none';
             gameFinished.style.display = 'block';
             finalPlayerScoreElement.textContent = finalScore;
-            // ELIMINAR: nextQuestionPlayerBtn.style.display = 'none'; // Ocultar el botón si el juego terminó
+            scenarioDisplay.style.display = 'none'; // Ocultar el display del escenario al finalizar
         });
 
         socket.on('error', (message) => {
@@ -165,11 +184,18 @@
                 joinForm.style.display = 'none';
                 gameLobby.style.display = 'block';
                 lobbyMessage.textContent = 'Ya estás conectado al juego. Esperando que el administrador inicie/continúe.';
+            } else if (message.includes('inscripciones están cerradas')) { // Nuevo error para inscripciones cerradas
+                playerMessages.textContent = message;
+                joinGameBtn.disabled = true; // Deshabilita el botón de unirse
+                playerNameInput.disabled = true;
+                playerRoleSelect.disabled = true;
             }
         });
 
         socket.on('adminDisconnectedNotification', (message) => {
             playerMessages.textContent = message;
+            // Opcional: Si el admin se desconecta y el juego termina, puedes forzar un reload
+            setTimeout(() => { window.location.reload(); }, 3000);
         });
 
         socket.on('disconnect', () => {
@@ -181,6 +207,7 @@
             playerNameInput.disabled = false;
             playerRoleSelect.disabled = false;
             joinGameBtn.disabled = false;
+            scenarioDisplay.style.display = 'none'; // Ocultar el display del escenario al desconectar
         });
 
         socket.on('reconnect', () => {

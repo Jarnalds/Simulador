@@ -45,6 +45,50 @@ app.get('/', (req, res) => {
 });
 console.log('6. Ruta GET / configurada.'); // <-- LOG DE DEPURACIÓN
 
+// ... (tu código server.js existente, después de app.get('/'))
+
+// Nueva ruta para descargar resultados
+app.get('/download-results', (req, res) => {
+    console.log('Solicitud recibida para /download-results'); // Log de depuración
+
+    // 1. Recopilar los datos de los jugadores (incluyendo puntuaciones)
+    const finalScores = Object.values(players).map(player => ({
+        name: player.name,
+        role: player.role,
+        score: player.score // Asegúrate de que player.score se actualice correctamente en tu lógica
+    }));
+
+    if (finalScores.length === 0) {
+        console.log('No hay jugadores con resultados para descargar.');
+        return res.status(404).send('No hay resultados disponibles para descargar.');
+    }
+
+    // 2. Convertir los datos a formato CSV
+    const headers = ['Nombre', 'Rol', 'Puntuación'];
+    const csvRows = [];
+
+    // Añadir encabezados
+    csvRows.push(headers.join(','));
+
+    // Añadir datos de cada jugador
+    finalScores.forEach(player => {
+        csvRows.push([player.name, player.role, player.score].join(','));
+    });
+
+    const csvString = csvRows.join('\n');
+    console.log('CSV generado:\n', csvString); // Log para ver el CSV generado
+
+    // 3. Enviar el archivo CSV como descarga
+    res.header('Content-Type', 'text/csv');
+    res.attachment('resultados_kahoot.csv'); // Nombre del archivo que se descargará
+    res.send(csvString);
+    console.log('Archivo CSV enviado para descarga.'); // Log de depuración
+});
+
+// ... (el resto de tu código server.js, incluyendo io.on('connection'))
+
+
+
 // 5. Variables de estado del juego
 let gameStarted = false; // Indica si el juego ha sido iniciado por el administrador
 // Objeto para almacenar los datos de los jugadores, incluyendo su puntuación y el índice de la pregunta actual

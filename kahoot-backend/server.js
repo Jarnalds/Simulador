@@ -5,38 +5,47 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors'); // Asegúrate de tener 'cors' instalado (npm install cors)
+console.log('1. Módulos importados: express, http, socket.io, cors.'); // <-- LOG DE DEPURACIÓN
 
 // 2. Importar las preguntas desde el archivo questions.js
 const questionsByRole = require('./questions.js');
+console.log('2. Preguntas cargadas desde questions.js.'); // <-- LOG DE DEPURACIÓN
+console.log('2a. Estructura de questionsByRole:', Object.keys(questionsByRole)); // <-- LOG DE DEPURACIÓN: Verifica las claves del objeto
 
 // 3. Configuración inicial del servidor Express y Socket.IO
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 3000; // Usa el puerto de entorno de Render o 3000
+console.log(`3. Servidor Express y Socket.IO configurados. Puerto asignado: ${PORT}`); // <-- LOG DE DEPURACIÓN
 
 // Middleware para habilitar CORS (Cross-Origin Resource Sharing)
 // Esto permite que tu frontend (ej. en Netlify) se conecte a tu backend (en Render)
 app.use(cors());
+console.log('4. Middleware CORS configurado para Express.'); // <-- LOG DE DEPURACIÓN
 
 // Configuración de Socket.IO para permitir conexiones desde cualquier origen
 const io = socketIo(server, {
     cors: {
-       origin: "https://jarnalds.github.io", // ¡Asegúrate de que esta URL sea exactamente la de tu frontend!
+        origin: "https://jarnalds.github.io", // ¡Asegúrate de que esta URL sea exactamente la de tu frontend!
         methods: ["GET", "POST"]
     }
 });
+console.log('5. Socket.IO configurado con CORS para origen:', io.engine.opts.cors.origin); // <-- LOG DE DEPURACIÓN
 
 // 4. Ruta simple para verificar que el servidor está funcionando
 // Al visitar la URL raíz del backend (ej. backend-6ya4.onrender.com/), verás este mensaje.
 app.get('/', (req, res) => {
     res.send('Servidor de Mini Kahoot (Backend) está funcionando.');
+    console.log('Ruta "/" accedida. Enviando mensaje de confirmación.'); // <-- LOG DE DEPURACIÓN
 });
+console.log('6. Ruta GET / configurada.'); // <-- LOG DE DEPURACIÓN
 
 // 5. Variables de estado del juego
 let gameStarted = false; // Indica si el juego ha sido iniciado por el administrador
 // Objeto para almacenar los datos de los jugadores, incluyendo su puntuación y el índice de la pregunta actual
 let players = {}; // Formato: { socketId: { name: "...", role: "...", score: 0, currentQuestionIndex: 0 } }
 let adminSocketId = null; // Almacena el ID de socket del administrador conectado
+console.log('7. Variables de estado del juego inicializadas.'); // <-- LOG DE DEPURACIÓN
 
 // 6. Manejo de conexiones de Socket.IO
 io.on('connection', (socket) => {
@@ -44,153 +53,168 @@ io.on('connection', (socket) => {
 
     // Evento 'joinGame': Un usuario intenta unirse como jugador o administrador
     socket.on('joinGame', ({ name, role, isAdmin }) => {
+        console.log(`Evento joinGame recibido de ${socket.id}: ${name}, ${role}, Admin: ${isAdmin}`); // <-- LOG
         if (isAdmin) {
             // Lógica para el administrador
             if (adminSocketId) {
-                // Si ya hay un administrador, enviar error al nuevo intento
                 socket.emit('error', 'Ya hay un administrador conectado.');
+                console.log(`Intento de conexión de admin ${name} fallido: ya hay uno.`); // <-- LOG
                 return;
             }
             adminSocketId = socket.id; // Asignar el socket actual como administrador
             io.to(adminSocketId).emit('adminConnected'); // Notificar al admin que se conectó exitosamente
-            // Enviar la lista actual de jugadores al admin al conectarse
             io.to(adminSocketId).emit('currentPlayers', Object.values(players).map(p => ({ id: p.id, name: p.name, role: p.role })));
             console.log(`Admin ${name} conectado: ${socket.id}`);
         } else {
             // Lógica para los jugadores
             if (players[socket.id]) {
-                // Si el socket ya está en la lista de jugadores, enviar error
                 socket.emit('error', 'Ya estás conectado al juego.');
+                console.log(`Intento de conexión de jugador ${name} fallido: ya conectado.`); // <-- LOG
                 return;
             }
-            // Inicializar datos del nuevo jugador, incluyendo su índice de pregunta en 0
             players[socket.id] = { id: socket.id, name, role, score: 0, currentQuestionIndex: 0 };
             console.log(`Jugador ${name} (${role}) conectado: ${socket.id}`);
             io.emit('playerJoined', { id: socket.id, name, role }); // Emitir a todos que un jugador se unió
 
-            // Notificar al admin si está conectado sobre el nuevo jugador
             if (adminSocketId) {
                 io.to(adminSocketId).emit('playerJoined', { id: socket.id, name, role });
             }
 
-            // Si el juego ya ha comenzado, enviar la primera pregunta de inmediato al nuevo jugador
             if (gameStarted) {
-                io.to(socket.id).emit('gameStarted'); // Notificarle que el juego ya empezó
-                sendQuestionToPlayer(socket.id); // Enviar su primera pregunta
+                io.to(socket.id).emit('gameStarted');
+                sendQuestionToPlayer(socket.id);
             } else {
-                io.to(socket.id).emit('waitingForGameToStart'); // Mensaje para esperar
+                io.to(socket.id).emit('waitingForGameToStart');
             }
         }
     });
 
     // Evento 'startGame': El administrador inicia el juego
     socket.on('startGame', () => {
-        // Solo el admin puede iniciar el juego y solo si no ha comenzado ya
+        console.log(`Evento startGame recibido de ${socket.id}. AdminSocketId: ${adminSocketId}, GameStarted: ${gameStarted}`); // <-- LOG
         if (socket.id === adminSocketId && !gameStarted) {
             if (Object.keys(players).length === 0) {
-                // Si no hay jugadores, el admin no puede iniciar el juego
                 io.to(adminSocketId).emit('error', 'No hay jugadores conectados para iniciar el juego.');
+                console.log('Admin intentó iniciar juego sin jugadores.'); // <-- LOG
                 return;
             }
-            gameStarted = true; // Establecer el estado del juego como iniciado
+            gameStarted = true;
 
-            io.emit('gameStarted'); // Notificar a todos los jugadores que el juego comenzó
+            io.emit('gameStarted');
             console.log('Juego iniciado por el admin. Enviando primera pregunta a cada jugador.');
 
-            // Enviar la primera pregunta a CADA jugador activo
             Object.values(players).forEach(player => {
-                player.currentQuestionIndex = 0; // Resetear el índice para todos al iniciar el juego
-                sendQuestionToPlayer(player.id); // Llamar a la función para enviar la pregunta
+                player.currentQuestionIndex = 0;
+                sendQuestionToPlayer(player.id);
             });
 
-            // Notificar al admin que el juego ha empezado
             io.to(adminSocketId).emit('gameStartedAdmin');
 
         } else if (socket.id !== adminSocketId) {
             socket.emit('error', 'Solo el administrador puede iniciar el juego.');
+            console.log('Jugador intentó iniciar juego.'); // <-- LOG
         } else {
             socket.emit('error', 'El juego ya ha comenzado.');
+            console.log('Admin intentó iniciar juego ya iniciado.'); // <-- LOG
         }
     });
 
     // Evento 'submitAnswer': Un jugador envía su respuesta a una pregunta
     socket.on('submitAnswer', ({ questionId, selectedOption }) => {
+        console.log(`Evento submitAnswer de ${socket.id} para QID: ${questionId}, Option: ${selectedOption}`); // <-- LOG
         const player = players[socket.id];
-        if (!player || !gameStarted) return; // Si no es un jugador o el juego no ha comenzado, ignorar
-
-        const roleQuestions = questionsByRole[player.role]; // Obtener preguntas para el rol del jugador
-        if (!roleQuestions) return; // Si no hay preguntas para el rol, ignorar
-
-        // Obtener la pregunta actual del jugador basándose en su índice
-        const currentQuestion = roleQuestions[player.currentQuestionIndex];
-        if (!currentQuestion || currentQuestion.id !== questionId) {
-             // Si la pregunta no coincide o ya ha avanzado, ignorar (o manejar como error)
-             socket.emit('error', 'Esta pregunta ya no es válida o ya fue respondida.');
-             return;
+        if (!player || !gameStarted) {
+            console.log('Respuesta recibida pero jugador no válido o juego no iniciado.'); // <-- LOG
+            return;
         }
 
-        // Comprobar si la respuesta seleccionada es correcta
+        const roleQuestions = questionsByRole[player.role];
+        if (!roleQuestions) {
+            console.log(`No hay preguntas para el rol ${player.role} del jugador ${player.name}.`); // <-- LOG
+            return;
+        }
+
+        const currentQuestion = roleQuestions[player.currentQuestionIndex];
+        if (!currentQuestion || currentQuestion.id !== questionId) {
+            socket.emit('error', 'Esta pregunta ya no es válida o ya fue respondida.');
+            console.log(`Pregunta no válida para ${player.name}. Expected ID: ${currentQuestion ? currentQuestion.id : 'N/A'}, Received ID: ${questionId}`); // <-- LOG
+            return;
+        }
+
         if (selectedOption === currentQuestion.answer) {
-            player.score++; // Incrementar la puntuación si es correcta
+            player.score++;
             socket.emit('answerResult', { correct: true, score: player.score, correctOption: currentQuestion.answer });
             console.log(`${player.name} (${player.role}) respondió correctamente. Puntuación: ${player.score}`);
         } else {
             socket.emit('answerResult', { correct: false, correctOption: currentQuestion.answer });
             console.log(`${player.name} (${player.role}) respondió incorrectamente.`);
         }
-        io.to(socket.id).emit('disableOptions'); // Deshabilitar opciones después de responder
+        io.to(socket.id).emit('disableOptions');
 
-        // *** CAMBIO CLAVE PARA EL AVANCE AUTOMÁTICO ***
-        // Después de un pequeño retraso (1 segundo), avanzamos al jugador a la siguiente pregunta
         setTimeout(() => {
-            player.currentQuestionIndex++; // Incrementar el índice de la pregunta para este jugador
-            sendQuestionToPlayer(socket.id); // Enviar la siguiente pregunta (o la pantalla final)
-        }, 1000); // Retraso de 1 segundo (1000 milisegundos)
+            player.currentQuestionIndex++;
+            sendQuestionToPlayer(socket.id);
+        }, 1000);
     });
 
     // Evento 'disconnect': Un usuario se desconecta
     socket.on('disconnect', () => {
-        console.log('Usuario desconectado:', socket.id);
+        console.log('Usuario desconectado:', socket.id); // <-- LOG
         if (socket.id === adminSocketId) {
-            // Si el admin se desconecta, resetear el estado del juego
             adminSocketId = null;
             gameStarted = false;
-            // Notificar a todos los jugadores que el admin se fue
             Object.values(players).forEach(player => {
                 io.to(player.id).emit('adminDisconnectedNotification', 'El administrador se ha desconectado. Tu juego puede continuar, pero no habrá más control central.');
             });
-            console.log('Administrador desconectado.');
+            console.log('Administrador desconectado. Estado del juego reseteado.'); // <-- LOG
         } else if (players[socket.id]) {
-            // Si es un jugador, eliminarlo de la lista
             const disconnectedPlayer = players[socket.id];
             delete players[socket.id];
             io.emit('playerLeft', { id: socket.id, name: disconnectedPlayer.name });
-            // Notificar al admin si está conectado sobre el jugador que se fue
             if (adminSocketId) {
                 io.to(adminSocketId).emit('playerLeft', { id: socket.id, name: disconnectedPlayer.name });
             }
-            console.log(`Jugador ${disconnectedPlayer.name} ha dejado el juego.`);
+            console.log(`Jugador ${disconnectedPlayer.name} ha dejado el juego.`); // <-- LOG
         }
     });
 
     // 7. Función auxiliar para enviar una pregunta a un jugador específico
     function sendQuestionToPlayer(playerId) {
         const player = players[playerId];
-        if (!player) return;
+        if (!player) {
+            console.log(`Error: No se encontró el jugador con ID ${playerId} para enviar pregunta.`); // <-- LOG
+            return;
+        }
 
         const playerRoleQuestions = questionsByRole[player.role];
+        if (!playerRoleQuestions) {
+            console.log(`Error: No hay preguntas definidas para el rol ${player.role} del jugador ${player.name}.`); // <-- LOG
+            return;
+        }
 
-        // Verificar si el jugador tiene más preguntas para su rol
-        if (playerRoleQuestions && player.currentQuestionIndex < playerRoleQuestions.length) {
-            // Si hay más preguntas, preparar y enviar la siguiente
+        if (player.currentQuestionIndex < playerRoleQuestions.length) {
             const questionToSend = { ...playerRoleQuestions[player.currentQuestionIndex] };
             delete questionToSend.answer; // ¡MUY IMPORTANTE! No enviar la respuesta al cliente
             io.to(playerId).emit('newQuestion', questionToSend);
-            console.log(`Enviando pregunta ${questionToSend.id} a ${player.name} (${player.role})`);
+            console.log(`Enviando pregunta ${questionToSend.id} a ${player.name} (${player.role}). Índice: ${player.currentQuestionIndex}`); // <-- LOG
         } else {
-            // Si el jugador ha terminado todas sus preguntas, enviar su puntuación final
             io.to(playerId).emit('gameFinishedForPlayer', { finalScore: player.score });
-            console.log(`${player.name} (${player.role}) ha terminado sus preguntas con una puntuación de ${player.score}.`);
+            console.log(`${player.name} (${player.role}) ha terminado sus preguntas con una puntuación de ${player.score}.`); // <-- LOG
         }
     }
-}); //
+}); // Fin de io.on('connection')
+
+console.log('8. Listener de Socket.IO "connection" y función sendQuestionToPlayer definidos.'); // <-- LOG DE DEPURACIÓN
+
+// Esto debería ser lo último que se ejecuta para iniciar el servidor HTTP.
+console.log('9. Intentando iniciar el servidor HTTP en server.listen()...'); // <-- LOG DE DEPURACIÓN
+server.listen(PORT, () => {
+    console.log(`Servidor de Mini Kahoot (Backend) escuchando en el puerto ${PORT}`);
+    console.log(`Accede a http://localhost:${PORT}/ para verificar.`); // <-- LOG DE DEPURACIÓN
+});
+
+// ¡IMPORTANTE! Si ves este mensaje en la consola, algo está mal.
+// Significa que la llamada a server.listen() no está manteniendo el proceso abierto,
+// o que hay un error muy inusual que se produce *después* de que server.listen() es llamado,
+// pero *antes* de que el callback de listen se ejecute, y que no detiene el proceso de forma limpia.
+console.log('10. NOTA: Esta línea solo debería aparecer si el servidor no se inicia correctamente o se cierra inesperadamente después de listen.'); // <-- LOG DE DEPURACIÓN

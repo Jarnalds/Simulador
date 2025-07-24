@@ -5,57 +5,67 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors'); // Asegúrate de tener 'cors' instalado (npm install cors)
-console.log('1. Módulos importados: express, http, socket.io, cors.'); // <-- LOG DE DEPURACIÓN
+console.log('1. Módulos importados: express, http, socket.io, cors.');
 
-// 2. Importar las preguntas desde el archivo questions.js
-const questionsByRole = require('./questions.js');
-console.log('2. Preguntas cargadas desde questions.js.'); // <-- LOG DE DEPURACIÓN
-console.log('2a. Estructura de questionsByRole:', Object.keys(questionsByRole)); // <-- LOG DE DEPURACIÓN: Verifica las claves del objeto
+// 2. Importar los datos del juego (escenarios, roles y preguntas)
+const gameData = require('./scenarios.js'); // Asegúrate de que este archivo exista y esté en la misma carpeta
+console.log('2. Datos del juego (escenarios y preguntas) cargados.');
+console.log('2a. Escenarios disponibles:', Object.keys(gameData));
 
 // 3. Configuración inicial del servidor Express y Socket.IO
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 3000; // Usa el puerto de entorno de Render o 3000
-console.log(`3. Servidor Express y Socket.IO configurados. Puerto asignado: ${PORT}`); // <-- LOG DE DEPURACIÓN
+console.log(`3. Servidor Express y Socket.IO configurado. Puerto asignado: ${PORT}`);
 
 // Middleware para habilitar CORS (Cross-Origin Resource Sharing)
-// Esto permite que tu frontend (ej. en Netlify) se conecte a tu backend (en Render)
+// Permite que tu frontend (https://jarnalds.github.io) se conecte a tu backend
 app.use(cors({
-  origin: 'https://jarnalds.github.io', // Permite cualquier origen (NO USAR EN PRODUCCIÓN REAL)
-  methods: ['GET', 'POST']
+    origin: 'https://jarnalds.github.io', // ¡Asegúrate de que esta sea exactamente la URL de tu frontend!
+    methods: ['GET', 'POST']
 }));
+console.log('4. Middleware CORS configurado para Express con origen:', 'https://jarnalds.github.io');
 
-
-console.log('4. Middleware CORS configurado para Express.'); // <-- LOG DE DEPURACIÓN
-
-// Configuración de Socket.IO para permitir conexiones desde cualquier origen
+// Configuración de Socket.IO para permitir conexiones desde el origen de tu frontend
 const io = socketIo(server, {
     cors: {
-        origin: "https://jarnalds.github.io", // ¡Asegúrate de que esta URL sea exactamente la de tu frontend!
+        origin: "https://jarnalds.github.io", // ¡Asegúrate de que esta sea exactamente la URL de tu frontend!
         methods: ["GET", "POST"]
     }
 });
-console.log('5. Socket.IO configurado con CORS para origen:', io.engine.opts.cors.origin); // <-- LOG DE DEPURACIÓN
+console.log('5. Socket.IO configurado con CORS para origen:', io.engine.opts.cors.origin);
 
-// 4. Ruta simple para verificar que el servidor está funcionando
-// Al visitar la URL raíz del backend (ej. backend-6ya4.onrender.com/), verás este mensaje.
+// 4. Variables de estado del juego
+let gameStarted = false; // Indica si el juego ha sido iniciado por el administrador
+let players = {}; // Formato: { socketId: { id, name, role, score, currentQuestionIndex } }
+let adminSocketId = null; // Almacena el ID de socket del administrador conectado
+let acceptNewPlayers = true; // Controla si nuevos jugadores pueden unirse
+let currentScenarioId = null; // Almacena el ID del escenario de juego activo
+console.log('7. Variables de estado del juego inicializadas.');
+
+// 5. Rutas HTTP
+// Ruta simple para verificar que el servidor está funcionando
 app.get('/', (req, res) => {
-    res.send('Servidor de Mini Kahoot (Backend) está funcionando.');
-    console.log('Ruta "/" accedida. Enviando mensaje de confirmación.'); // <-- LOG DE DEPURACIÓN
+    res.send('Servidor de Simulacros (Backend) está funcionando.');
+    console.log('Ruta "/" accedida. Enviando mensaje de confirmación.');
 });
-console.log('6. Ruta GET / configurada.'); // <-- LOG DE DEPURACIÓN
 
-// ... (tu código server.js existente, después de app.get('/'))
-
-// Nueva ruta para descargar resultados
+// Nueva ruta para descargar resultados en formato CSV
 app.get('/download-results', (req, res) => {
-    console.log('Solicitud recibida para /download-results'); // Log de depuración
+    console.log('Solicitud recibida para /download-results');
 
-    // 1. Recopilar los datos de los jugadores (incluyendo puntuaciones)
+    if (!currentScenarioId || !gameData[currentScenarioId]) {
+        console.log('No hay un escenario activo o válido para descargar resultados.');
+        return res.status(400).send('No hay un escenario activo o válido para descargar resultados.');
+    }
+
+    const scenarioName = gameData[currentScenarioId].name || 'Sin Nombre'; // Obtener nombre amigable del escenario
+
+    // Recopilar los datos de los jugadores (incluyendo puntuaciones)
     const finalScores = Object.values(players).map(player => ({
         name: player.name,
         role: player.role,
-        score: player.score // Asegúrate de que player.score se actualice correctamente en tu lógica
+        score: player.score
     }));
 
     if (finalScores.length === 0) {
@@ -63,7 +73,7 @@ app.get('/download-results', (req, res) => {
         return res.status(404).send('No hay resultados disponibles para descargar.');
     }
 
-    // 2. Convertir los datos a formato CSV
+    // Convertir los datos a formato CSV
     const headers = ['Nombre', 'Rol', 'Puntuación'];
     const csvRows = [];
 
@@ -72,42 +82,36 @@ app.get('/download-results', (req, res) => {
 
     // Añadir datos de cada jugador
     finalScores.forEach(player => {
-        csvRows.push([player.name, player.role, player.score].join(','));
+        // Asegúrate de escapar comas si los nombres/roles pueden contenerlas
+        const sanitizedName = `"${player.name.replace(/"/g, '""')}"`;
+        const sanitizedRole = `"${player.role.replace(/"/g, '""')}"`;
+        csvRows.push([sanitizedName, sanitizedRole, player.score].join(','));
     });
 
     const csvString = csvRows.join('\n');
-    console.log('CSV generado:\n', csvString); // Log para ver el CSV generado
+    console.log('CSV generado para descarga.');
 
-    // 3. Enviar el archivo CSV como descarga
+    // Enviar el archivo CSV como descarga
     res.header('Content-Type', 'text/csv');
-    res.attachment('resultados_kahoot.csv'); // Nombre del archivo que se descargará
+    res.attachment(`resultados_simulacro_${scenarioName.replace(/\s+/g, '_').toLowerCase()}.csv`); // Nombre del archivo dinámico
     res.send(csvString);
-    console.log('Archivo CSV enviado para descarga.'); // Log de depuración
+    console.log('Archivo CSV enviado para descarga.');
 });
 
-// ... (el resto de tu código server.js, incluyendo io.on('connection'))
+console.log('6. Rutas HTTP configuradas: "/" y "/download-results".');
 
-
-
-// 5. Variables de estado del juego
-let gameStarted = false; // Indica si el juego ha sido iniciado por el administrador
-// Objeto para almacenar los datos de los jugadores, incluyendo su puntuación y el índice de la pregunta actual
-let players = {}; // Formato: { socketId: { name: "...", role: "...", score: 0, currentQuestionIndex: 0 } }
-let adminSocketId = null; // Almacena el ID de socket del administrador conectado
-console.log('7. Variables de estado del juego inicializadas.'); // <-- LOG DE DEPURACIÓN
-
-// 6. Manejo de conexiones de Socket.IO
+// 7. Manejo de conexiones de Socket.IO
 io.on('connection', (socket) => {
-    console.log('Nuevo usuario conectado:', socket.id); // Log cuando alguien se conecta
+    console.log('Nuevo usuario conectado:', socket.id);
 
     // Evento 'joinGame': Un usuario intenta unirse como jugador o administrador
     socket.on('joinGame', ({ name, role, isAdmin }) => {
-        console.log(`Evento joinGame recibido de ${socket.id}: ${name}, ${role}, Admin: ${isAdmin}`); // <-- LOG
+        console.log(`Evento joinGame recibido de ${socket.id}: ${name}, ${role}, Admin: ${isAdmin}`);
         if (isAdmin) {
             // Lógica para el administrador
             if (adminSocketId) {
                 socket.emit('error', 'Ya hay un administrador conectado.');
-                console.log(`Intento de conexión de admin ${name} fallido: ya hay uno.`); // <-- LOG
+                console.log(`Intento de conexión de admin ${name} fallido: ya hay uno.`);
                 return;
             }
             adminSocketId = socket.id; // Asignar el socket actual como administrador
@@ -116,20 +120,25 @@ io.on('connection', (socket) => {
             console.log(`Admin ${name} conectado: ${socket.id}`);
         } else {
             // Lógica para los jugadores
+            if (!acceptNewPlayers) { // No permitir nuevas conexiones si las inscripciones están cerradas
+                socket.emit('error', 'El juego ha cerrado las inscripciones o ya ha finalizado.');
+                console.log(`Jugador ${name} intentó unirse, pero las inscripciones están cerradas.`);
+                return;
+            }
             if (players[socket.id]) {
                 socket.emit('error', 'Ya estás conectado al juego.');
-                console.log(`Intento de conexión de jugador ${name} fallido: ya conectado.`); // <-- LOG
+                console.log(`Intento de conexión de jugador ${name} fallido: ya conectado.`);
                 return;
             }
             players[socket.id] = { id: socket.id, name, role, score: 0, currentQuestionIndex: 0 };
             console.log(`Jugador ${name} (${role}) conectado: ${socket.id}`);
             io.emit('playerJoined', { id: socket.id, name, role }); // Emitir a todos que un jugador se unió
 
-            if (adminSocketId) {
+            if (adminSocketId) { // Notificar al admin si ya está conectado
                 io.to(adminSocketId).emit('playerJoined', { id: socket.id, name, role });
             }
 
-            if (gameStarted) {
+            if (gameStarted) { // Si el juego ya inició, enviar la primera pregunta
                 io.to(socket.id).emit('gameStarted');
                 sendQuestionToPlayer(socket.id);
             } else {
@@ -138,22 +147,47 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Evento 'selectScenario': El administrador selecciona el escenario de juego
+    socket.on('selectScenario', (scenarioId) => {
+        if (socket.id === adminSocketId) {
+            if (gameData[scenarioId]) {
+                currentScenarioId = scenarioId;
+                io.to(adminSocketId).emit('scenarioSelected', gameData[scenarioId].name);
+                console.log(`Admin ${socket.id} seleccionó el escenario: ${gameData[scenarioId].name}`);
+                // Opcional: Notificar a los jugadores que el escenario ha sido seleccionado
+                // io.emit('scenarioSet', gameData[scenarioId].name);
+            } else {
+                io.to(adminSocketId).emit('error', 'Escenario no válido.');
+                console.log(`Admin ${socket.id} intentó seleccionar escenario inválido: ${scenarioId}`);
+            }
+        } else {
+            socket.emit('error', 'Solo el administrador puede seleccionar el escenario.');
+        }
+    });
+
     // Evento 'startGame': El administrador inicia el juego
     socket.on('startGame', () => {
-        console.log(`Evento startGame recibido de ${socket.id}. AdminSocketId: ${adminSocketId}, GameStarted: ${gameStarted}`); // <-- LOG
+        console.log(`Evento startGame recibido de ${socket.id}. AdminSocketId: ${adminSocketId}, GameStarted: ${gameStarted}`);
         if (socket.id === adminSocketId && !gameStarted) {
+            if (!currentScenarioId) { // Verificar que se haya seleccionado un escenario
+                io.to(adminSocketId).emit('error', 'Por favor, selecciona un escenario antes de iniciar el juego.');
+                console.log('Admin intentó iniciar juego sin escenario seleccionado.');
+                return;
+            }
             if (Object.keys(players).length === 0) {
                 io.to(adminSocketId).emit('error', 'No hay jugadores conectados para iniciar el juego.');
-                console.log('Admin intentó iniciar juego sin jugadores.'); // <-- LOG
+                console.log('Admin intentó iniciar juego sin jugadores.');
                 return;
             }
             gameStarted = true;
+            acceptNewPlayers = false; // Cierra las inscripciones una vez que el juego ha iniciado
+            console.log('Inscripciones cerradas: acceptNewPlayers = false');
 
             io.emit('gameStarted');
             console.log('Juego iniciado por el admin. Enviando primera pregunta a cada jugador.');
 
             Object.values(players).forEach(player => {
-                player.currentQuestionIndex = 0;
+                player.currentQuestionIndex = 0; // Reiniciar índice para el nuevo juego
                 sendQuestionToPlayer(player.id);
             });
 
@@ -161,32 +195,32 @@ io.on('connection', (socket) => {
 
         } else if (socket.id !== adminSocketId) {
             socket.emit('error', 'Solo el administrador puede iniciar el juego.');
-            console.log('Jugador intentó iniciar juego.'); // <-- LOG
+            console.log('Jugador intentó iniciar juego.');
         } else {
             socket.emit('error', 'El juego ya ha comenzado.');
-            console.log('Admin intentó iniciar juego ya iniciado.'); // <-- LOG
+            console.log('Admin intentó iniciar juego ya iniciado.');
         }
     });
 
     // Evento 'submitAnswer': Un jugador envía su respuesta a una pregunta
     socket.on('submitAnswer', ({ questionId, selectedOption }) => {
-        console.log(`Evento submitAnswer de ${socket.id} para QID: ${questionId}, Option: ${selectedOption}`); // <-- LOG
+        console.log(`Evento submitAnswer de ${socket.id} para QID: ${questionId}, Option: ${selectedOption}`);
         const player = players[socket.id];
-        if (!player || !gameStarted) {
-            console.log('Respuesta recibida pero jugador no válido o juego no iniciado.'); // <-- LOG
+        if (!player || !gameStarted || !currentScenarioId) {
+            console.log('Respuesta recibida pero jugador no válido, juego no iniciado o escenario no seleccionado.');
             return;
         }
 
-        const roleQuestions = questionsByRole[player.role];
+        const roleQuestions = gameData[currentScenarioId].roles[player.role]; // Obtener preguntas del escenario y rol
         if (!roleQuestions) {
-            console.log(`No hay preguntas para el rol ${player.role} del jugador ${player.name}.`); // <-- LOG
+            console.log(`No hay preguntas para el rol ${player.role} del jugador ${player.name} en el escenario ${currentScenarioId}.`);
             return;
         }
 
         const currentQuestion = roleQuestions[player.currentQuestionIndex];
         if (!currentQuestion || currentQuestion.id !== questionId) {
             socket.emit('error', 'Esta pregunta ya no es válida o ya fue respondida.');
-            console.log(`Pregunta no válida para ${player.name}. Expected ID: ${currentQuestion ? currentQuestion.id : 'N/A'}, Received ID: ${questionId}`); // <-- LOG
+            console.log(`Pregunta no válida para ${player.name}. Expected ID: ${currentQuestion ? currentQuestion.id : 'N/A'}, Received ID: ${questionId}`);
             return;
         }
 
@@ -198,24 +232,28 @@ io.on('connection', (socket) => {
             socket.emit('answerResult', { correct: false, correctOption: currentQuestion.answer });
             console.log(`${player.name} (${player.role}) respondió incorrectamente.`);
         }
-        io.to(socket.id).emit('disableOptions');
+        io.to(socket.id).emit('disableOptions'); // Deshabilitar opciones después de responder
 
         setTimeout(() => {
             player.currentQuestionIndex++;
             sendQuestionToPlayer(socket.id);
-        }, 1000);
+        }, 1000); // Dar un pequeño retraso antes de la siguiente pregunta/fin
     });
 
     // Evento 'disconnect': Un usuario se desconecta
     socket.on('disconnect', () => {
-        console.log('Usuario desconectado:', socket.id); // <-- LOG
+        console.log('Usuario desconectado:', socket.id);
         if (socket.id === adminSocketId) {
             adminSocketId = null;
             gameStarted = false;
+            acceptNewPlayers = true; // Si el admin se desconecta, las inscripciones se abren
+            currentScenarioId = null; // El escenario también se resetea
             Object.values(players).forEach(player => {
-                io.to(player.id).emit('adminDisconnectedNotification', 'El administrador se ha desconectado. Tu juego puede continuar, pero no habrá más control central.');
+                io.to(player.id).emit('adminDisconnectedNotification', 'El administrador se ha desconectado. El juego ha terminado.');
             });
-            console.log('Administrador desconectado. Estado del juego reseteado.'); // <-- LOG
+            console.log('Administrador desconectado. Estado del juego y escenario reseteado.');
+            players = {}; // Limpiar jugadores al desconectarse el admin
+            io.emit('resetGameFrontend'); // Notificar a los frontends que reseteen
         } else if (players[socket.id]) {
             const disconnectedPlayer = players[socket.id];
             delete players[socket.id];
@@ -223,47 +261,91 @@ io.on('connection', (socket) => {
             if (adminSocketId) {
                 io.to(adminSocketId).emit('playerLeft', { id: socket.id, name: disconnectedPlayer.name });
             }
-            console.log(`Jugador ${disconnectedPlayer.name} ha dejado el juego.`); // <-- LOG
+            console.log(`Jugador ${disconnectedPlayer.name} ha dejado el juego.`);
         }
+        checkGameEndAndSendResults(); // Revisar si el juego termina después de una desconexión
     });
 
-    // 7. Función auxiliar para enviar una pregunta a un jugador específico
+    // Función auxiliar para enviar una pregunta a un jugador específico
     function sendQuestionToPlayer(playerId) {
         const player = players[playerId];
         if (!player) {
-            console.log(`Error: No se encontró el jugador con ID ${playerId} para enviar pregunta.`); // <-- LOG
+            console.log(`Error: No se encontró el jugador con ID ${playerId} para enviar pregunta.`);
             return;
         }
 
-        const playerRoleQuestions = questionsByRole[player.role];
-        if (!playerRoleQuestions) {
-            console.log(`Error: No hay preguntas definidas para el rol ${player.role} del jugador ${player.name}.`); // <-- LOG
+        if (!currentScenarioId || !gameData[currentScenarioId]) {
+            console.log('Error: No hay escenario seleccionado o el escenario es inválido para enviar preguntas.');
+            io.to(playerId).emit('error', 'Error interno: No hay escenario de juego activo.');
+            return;
+        }
+        const scenarioQuestions = gameData[currentScenarioId].roles[player.role];
+
+        if (!scenarioQuestions) {
+            console.log(`Error: No hay preguntas definidas para el rol ${player.role} en el escenario ${currentScenarioId}.`);
+            io.to(playerId).emit('error', `Error: No hay preguntas para tu rol en este escenario.`);
             return;
         }
 
-        if (player.currentQuestionIndex < playerRoleQuestions.length) {
-            const questionToSend = { ...playerRoleQuestions[player.currentQuestionIndex] };
+        if (player.currentQuestionIndex < scenarioQuestions.length) {
+            const questionToSend = { ...scenarioQuestions[player.currentQuestionIndex] };
             delete questionToSend.answer; // ¡MUY IMPORTANTE! No enviar la respuesta al cliente
             io.to(playerId).emit('newQuestion', questionToSend);
-            console.log(`Enviando pregunta ${questionToSend.id} a ${player.name} (${player.role}). Índice: ${player.currentQuestionIndex}`); // <-- LOG
+            console.log(`Enviando pregunta ${questionToSend.id} a ${player.name} (${player.role}) en escenario ${currentScenarioId}. Índice: ${player.currentQuestionIndex}`);
         } else {
             io.to(playerId).emit('gameFinishedForPlayer', { finalScore: player.score });
-            console.log(`${player.name} (${player.role}) ha terminado sus preguntas con una puntuación de ${player.score}.`); // <-- LOG
+            console.log(`${player.name} (${player.role}) ha terminado sus preguntas en escenario ${currentScenarioId} con una puntuación de ${player.score}.`);
+            // Después de que un jugador termina, verificar si todos han terminado para enviar resultados al admin.
+            checkGameEndAndSendResults();
+        }
+    }
+
+    // Función auxiliar para verificar si el juego ha terminado para todos los jugadores
+    function checkGameEndAndSendResults() {
+        if (!gameStarted || !currentScenarioId || Object.keys(players).length === 0) {
+            // El juego no ha comenzado, no hay escenario, o no hay jugadores
+            return;
+        }
+
+        const allPlayersFinished = Object.values(players).every(player => {
+            const roleQuestions = gameData[currentScenarioId].roles[player.role];
+            return player.currentQuestionIndex >= (roleQuestions ? roleQuestions.length : 0);
+        });
+
+        if (allPlayersFinished) {
+            console.log('Todos los jugadores han terminado. Recopilando resultados finales.');
+            // Aquí puedes decidir si quieres que el juego se "cierre" completamente o se permita una nueva partida
+            gameStarted = false;
+            acceptNewPlayers = false; // Cierra las inscripciones al finalizar el juego
+            // currentScenarioId = null; // Podrías resetear el escenario o dejarlo para descarga
+            
+            const finalScores = Object.values(players).map(player => ({
+                id: player.id,
+                name: player.name,
+                role: player.role,
+                score: player.score
+            }));
+
+            if (adminSocketId) {
+                io.to(adminSocketId).emit('finalResults', finalScores);
+                console.log('Resultados finales enviados al administrador.');
+            } else {
+                console.log('No hay administrador conectado para enviar los resultados finales.');
+            }
+            // Después de enviar resultados, si el admin debe iniciar un nuevo juego,
+            // el admin debe resetear el estado y quizás acceptNewPlayers = true.
+            // io.emit('gameEnded'); // Emitir a todos que el juego ha terminado
         }
     }
 }); // Fin de io.on('connection')
 
-console.log('8. Listener de Socket.IO "connection" y función sendQuestionToPlayer definidos.'); // <-- LOG DE DEPURACIÓN
+console.log('8. Listeners de Socket.IO "connection" y funciones auxiliares definidas.');
 
 // Esto debería ser lo último que se ejecuta para iniciar el servidor HTTP.
-console.log('9. Intentando iniciar el servidor HTTP en server.listen()...'); // <-- LOG DE DEPURACIÓN
+console.log('9. Intentando iniciar el servidor HTTP en server.listen()...');
 server.listen(PORT, () => {
-    console.log(`Servidor de Mini Kahoot (Backend) escuchando en el puerto ${PORT}`);
-    console.log(`Accede a http://localhost:${PORT}/ para verificar.`); // <-- LOG DE DEPURACIÓN
+    console.log(`Servidor de Simulacros (Backend) escuchando en el puerto ${PORT}`);
+    console.log(`Accede a http://localhost:${PORT}/ para verificar (si es local).`);
 });
 
-// ¡IMPORTANTE! Si ves este mensaje en la consola, algo está mal.
-// Significa que la llamada a server.listen() no está manteniendo el proceso abierto,
-// o que hay un error muy inusual que se produce *después* de que server.listen() es llamado,
-// pero *antes* de que el callback de listen se ejecute, y que no detiene el proceso de forma limpia.
-console.log('10. NOTA: Esta línea solo debería aparecer si el servidor no se inicia correctamente o se cierra inesperadamente después de listen.'); // <-- LOG DE DEPURACIÓN
+console.log('10. NOTA: Esta línea solo debería aparecer si el servidor no se inicia correctamente o se cierra inesperadamente después de listen.');

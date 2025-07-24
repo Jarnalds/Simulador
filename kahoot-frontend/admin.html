@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kahoot Admin</title>
-    <link rel="stylesheet" href="style.css">
-</head>
+    <title>Panel de Administrador de Simulacros</title>
+    <link rel="stylesheet" href="style.css"> </head>
 <body>
     <div class="container">
-        <h1>Panel de Administrador de Kahoot</h1>
+        <h1>Panel de Administrador de Simulacros</h1>
         <div id="connection-form">
             <input type="text" id="adminNameInput" placeholder="Tu Nombre de Admin" required>
             <button id="connectAdminBtn">Conectar como Admin</button>
@@ -16,20 +15,45 @@
 
         <div id="adminControls" style="display: none;">
             <p>Admin Conectado: <strong id="adminNameDisplay"></strong></p>
-            <button id="startGameBtn">Iniciar Juego</button>
-            <button id="downloadResultsBtn" style="margin-left: 10px;">Descargar Resultados CSV</button>
-            <h2>Jugadores Conectados:</h2>
+
+            <div id="scenarioSelection" style="margin-bottom: 15px;">
+                <label for="scenarioSelect">Selecciona un Escenario:</label>
+                <select id="scenarioSelect">
+                    <option value="">Cargando escenarios...</option>
+                </select>
+                <button id="selectScenarioBtn" style="margin-left: 10px;">Confirmar Escenario</button>
+                <p>Escenario Activo: <strong id="activeScenarioDisplay">Ninguno</strong></p>
+            </div>
+            <button id="startGameBtn" disabled>Iniciar Juego</button> <button id="downloadResultsBtn" style="margin-left: 10px; display: none;">Descargar Resultados CSV</button> <h2>Jugadores Conectados:</h2>
             <ul id="playerList">
-                </ul>
+            </ul>
         </div>
         <div id="adminMessages"></div>
+        <div id="finalResultsDisplay" style="display: none; margin-top: 20px;">
+            <h2>Resultados Finales del Simulacro</h2>
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Rol</th>
+                        <th>Puntuación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </div>
     </div>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         // backend/kahoot-frontend/admin.html script
-        const socket = io('https://simulador-0si7.onrender.com'); // ¡Tu URL de Render!
 
+        // ¡IMPORTANTE! Asegúrate de que esta URL sea la de tu backend de Render
+        const backendRenderUrl = 'https://simulador-drdo.onrender.com'; // Por favor, verifica tu URL de Render
+        const socket = io(backendRenderUrl);
+
+        // Referencias a elementos del DOM
         const adminNameInput = document.getElementById('adminNameInput');
         const connectAdminBtn = document.getElementById('connectAdminBtn');
         const connectionForm = document.getElementById('connection-form');
@@ -38,8 +62,15 @@
         const startGameBtn = document.getElementById('startGameBtn');
         const playerList = document.getElementById('playerList');
         const adminMessages = document.getElementById('adminMessages');
-        // *** REFERENCIA AL NUEVO BOTÓN ***
         const downloadResultsBtn = document.getElementById('downloadResultsBtn');
+        const scenarioSelect = document.getElementById('scenarioSelect');
+        const selectScenarioBtn = document.getElementById('selectScenarioBtn');
+        const activeScenarioDisplay = document.getElementById('activeScenarioDisplay');
+        const finalResultsDisplay = document.getElementById('finalResultsDisplay');
+        const resultsTableBody = document.querySelector('#resultsTable tbody');
+
+
+        // --- Listeners de Eventos DOM ---
         connectAdminBtn.addEventListener('click', () => {
             const name = adminNameInput.value.trim();
             if (name) {
@@ -51,21 +82,53 @@
             }
         });
 
+        selectScenarioBtn.addEventListener('click', () => {
+            const selectedScenario = scenarioSelect.value;
+            if (selectedScenario) {
+                socket.emit('selectScenario', selectedScenario);
+                selectScenarioBtn.disabled = true;
+                scenarioSelect.disabled = true;
+            } else {
+                alert('Por favor, selecciona un escenario.');
+            }
+        });
+
         startGameBtn.addEventListener('click', () => {
             socket.emit('startGame');
         });
 
-        // *** LISTENER PARA EL NUEVO BOTÓN ***
         downloadResultsBtn.addEventListener('click', () => {
-            // Asegúrate de usar la URL REAL de tu backend en Render
-            const backendUrl = 'https://simulador-0si7.onrender.com'; // ¡Tu URL de Render!
-            window.open(`${backendUrl}/download-results`, '_blank');
+            // Usa la URL de tu backend definida al inicio del script
+            window.open(`${backendRenderUrl}/download-results`, '_blank');
         });
+
+        // --- Eventos de Socket.IO ---
+
         socket.on('adminConnected', () => {
             connectionForm.style.display = 'none';
             adminControls.style.display = 'block';
             adminNameDisplay.textContent = adminNameInput.value;
-            adminMessages.textContent = '¡Bienvenido, administrador! Conectado al juego. Esperando jugadores para iniciar.';
+            adminMessages.textContent = '¡Bienvenido, administrador! Conectado al juego. Selecciona un escenario.';
+            
+            // Llenar el selector de escenarios (esto es una lista de ejemplo, podrías pedirla al backend)
+            // En un futuro, el backend podría enviar una lista de {id: 'lanzamiento-producto', name: 'Lanzamiento de Producto'}
+            scenarioSelect.innerHTML = '<option value="">--Selecciona--</option>';
+            const scenarios = { // ESTOS SON LOS IDS Y NOMBRES DE EJEMPLO DE TU scenarios.js
+                'lanzamiento-producto': 'Lanzamiento de Producto',
+                'crisis-ciberseguridad': 'Crisis de Ciberseguridad'
+            };
+            for (const id in scenarios) {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = scenarios[id];
+                scenarioSelect.appendChild(option);
+            }
+        });
+
+        socket.on('scenarioSelected', (scenarioName) => {
+            activeScenarioDisplay.textContent = scenarioName;
+            adminMessages.textContent = `Escenario "${scenarioName}" seleccionado. Ya puedes iniciar el juego cuando haya jugadores.`;
+            startGameBtn.disabled = false; // Habilitar botón de iniciar juego
         });
 
         socket.on('currentPlayers', (playersArray) => {
@@ -96,21 +159,47 @@
 
         socket.on('gameStartedAdmin', () => {
             adminMessages.textContent = '¡Juego Iniciado! Los jugadores ya están recibiendo sus preguntas y avanzarán por su cuenta.';
-            startGameBtn.style.display = 'none';
+            startGameBtn.style.display = 'none'; // Ocultar botón de iniciar juego
+            downloadResultsBtn.style.display = 'none'; // Ocultar botón de descarga al iniciar
+            finalResultsDisplay.style.display = 'none'; // Ocultar resultados finales si se habían mostrado
+        });
+
+        socket.on('finalResults', (finalScores) => {
+            console.log('Resultados finales recibidos del backend:', finalScores);
+            adminMessages.textContent = '¡Juego Finalizado! Resultados disponibles.';
+            downloadResultsBtn.style.display = 'block'; // Mostrar botón de descarga
+            finalResultsDisplay.style.display = 'block'; // Mostrar la sección de resultados
+            resultsTableBody.innerHTML = ''; // Limpiar tabla antes de añadir nuevos resultados
+
+            finalScores.forEach(player => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${player.name}</td>
+                    <td>${player.role}</td>
+                    <td>${player.score}</td>
+                `;
+                resultsTableBody.appendChild(row);
+            });
+            // Opcional: Aquí podrías añadir un botón de "Reiniciar Juego" para el admin si lo deseas
         });
 
         socket.on('error', (message) => {
             adminMessages.textContent = `Error del servidor: ${message}`;
             alert(`Error: ${message}`);
+            // Re-habilitar campos si la conexión del admin falla por ya haber uno
             if (message.includes('administrador conectado')) {
                 adminNameInput.disabled = false;
                 connectAdminBtn.disabled = false;
             }
+            // Re-habilitar selector de escenario si la selección falla
+            if (message.includes('Escenario no válido.') || message.includes('selecciona un escenario')) {
+                selectScenarioBtn.disabled = false;
+                scenarioSelect.disabled = false;
+            }
         });
 
-        socket.on('adminDisconnected', () => {
-            alert('El administrador se ha desconectado. El juego ha terminado para los jugadores si el admin no se reconecta pronto.');
-            window.location.reload();
+        socket.on('adminDisconnectedNotification', (message) => { // Esto es para jugadores
+             console.log(message); // Este evento no se usa directamente en admin.html, pero se deja por si acaso.
         });
 
         socket.on('disconnect', () => {
@@ -119,7 +208,23 @@
             adminControls.style.display = 'none';
             adminNameInput.disabled = false;
             connectAdminBtn.disabled = false;
+            startGameBtn.disabled = true; // Deshabilitar al desconectar
+            selectScenarioBtn.disabled = false; // Habilitar para futura reconexión
+            scenarioSelect.disabled = false; // Habilitar para futura reconexión
+            playerList.innerHTML = ''; // Limpiar lista de jugadores
+            downloadResultsBtn.style.display = 'none'; // Ocultar descarga
+            finalResultsDisplay.style.display = 'none'; // Ocultar resultados
+            activeScenarioDisplay.textContent = 'Ninguno'; // Resetear display de escenario
         });
+        
+        socket.on('resetGameFrontend', () => { // Evento para resetear el frontend de jugadores
+            // Si el admin se desconecta y resetea el juego en el backend,
+            // los frontends de jugadores podrían recibir esto para volver a la pantalla de inicio.
+            // En admin.html, ya se maneja con 'disconnect' si el admin se desconecta.
+            console.log('Juego reseteado por el administrador. Reiniciando frontend.');
+            // window.location.reload(); // Recargar la página para un reset completo
+        });
+
     </script>
 </body>
 </html>

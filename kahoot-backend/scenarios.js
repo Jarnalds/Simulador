@@ -3,6 +3,7 @@ const gameData = {
     // Escenario 1: Lanzamiento de Producto
     'lanzamiento-producto': {
         name: 'Lanzamiento de Producto', // Nombre amigable del escenario
+        description: 'Te encuentras en la fase final de preparación para el gran lanzamiento', // <-- Descripción completa
         roles: { // Esta es la línea correcta para el objeto de roles
             'programador': [
                 { id: 'lp-prog-1', question: "¿Qué metodología de desarrollo es ideal para un lanzamiento rápido?", options: ["Waterfall", "Agile", "DevOps"], answer: "Agile" },
@@ -23,7 +24,8 @@ const gameData = {
     },
     // Escenario 2: Crisis de Ciberseguridad
     'crisis-ciberseguridad': {
-        name: 'Crisis de Ciberseguridad',       
+        name: 'Crisis de Ciberseguridad',
+        description: '¡Alerta! Un ataque de ciberseguridad ha', // <-- Descripción corregida y completa para este escenario
         roles: {
             'programador': [
                 { id: 'cc-prog-1', question: "¿Qué es un ataque de 'Phishing'?", options: ["Inyección de código malicioso", "Robo de datos a través de engaño", "Sobrecarga de servidor"], answer: "Robo de datos a través de engaño" },

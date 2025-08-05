@@ -1,10 +1,10 @@
 const gameData = {
-    // Escenario 1: Lanzamiento de Producto
-    'lanzamiento-producto': {
+    // Escenario 1: Emergencia Médica (renombrado para mayor coherencia)
+    'emergencia-medica': {
         name: 'Código Azul',
         description: 'Emergencia Médica en cortina 1',
         roles: {
-           'diseñador': [
+            'diseñador': [
                 { id: 'cc-dis-1', question: "¿Cómo ayuda el UX a prevenir ataques de ingeniería social?", options: ["Diseñando interfaces complejas", "Creando alertas claras y comprensibles", "Limitando la funcionalidad"], answer: "Creando alertas claras y comprensibles" },
                 { id: 'cc-dis-2', question: "¿Qué aspecto del diseño es clave en un mensaje de alerta de seguridad?", options: ["Animaciones complejas", "Claridad y urgencia", "Uso de colores vibrantes"], answer: "Claridad y urgencia" },
                 { id: 'cc-dis-3', question: "¿Qué papel juega la 'confianza' en la experiencia de usuario durante una crisis?", options: ["Es irrelevante", "Es fundamental para mantener la credibilidad", "Solo afecta a los nuevos usuarios"], answer: "Es fundamental para mantener la credibilidad" }
@@ -22,7 +22,7 @@ const gameData = {
         name: 'Crisis de Ciberseguridad',
         description: '¡Alerta! Un ataque de ciberseguridad ha ocurrido.',
         roles: {
-           'diseñador': [
+            'diseñador': [
                 { id: 'cc-dis-4', question: "¿Qué aspecto es esencial en el diseño para crisis?", options: ["Claridad visual", "Colores brillantes", "Animaciones largas"], answer: "Claridad visual" },
                 { id: 'cc-dis-5', question: "¿Cómo puede el diseño prevenir errores humanos?", options: ["Interfaces confusas", "Alertas claras y directas", "Reduciendo funciones"], answer: "Alertas claras y directas" },
                 { id: 'cc-dis-6', question: "¿Qué es la accesibilidad en diseño?", options: ["Hacer interfaces solo para expertos", "Hacer interfaces usables para todos", "Eliminar funcionalidades"], answer: "Hacer interfaces usables para todos" }

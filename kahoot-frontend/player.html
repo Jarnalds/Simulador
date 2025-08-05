@@ -133,21 +133,21 @@
             optionsContainer.innerHTML = '';
             resultElement.textContent = '';
 
-          question.options.forEach((option, index) => {
-        const button = document.createElement('button');
-        button.textContent = option;
-        button.classList.add('option-button');
-        button.addEventListener('click', () => submitAnswer(index));
-        optionsContainer.appendChild(button);
-    });
-});
+            question.options.forEach((optionText) => {
+                const button = document.createElement('button');
+                button.textContent = optionText;
+                button.classList.add('option-button');
+                button.addEventListener('click', () => submitAnswer(optionText));
+                optionsContainer.appendChild(button);
+            });
+        });
 
-function submitAnswer(answerIndex) {
-    optionsContainer.querySelectorAll('.option-button').forEach((btn) => {
-        btn.disabled = true;
-    });
-    socket.emit('submitAnswer', { answerIndex });
-}
+        function submitAnswer(selectedOptionText) {
+            optionsContainer.querySelectorAll('.option-button').forEach((btn) => {
+                btn.disabled = true;
+            });
+            socket.emit('submitAnswer', { selectedOption: selectedOptionText });
+        }
 
         socket.on('answerResult', ({ correct, score, correctOption }) => {
             playerScoreElement.textContent = score;
@@ -163,7 +163,6 @@ function submitAnswer(answerIndex) {
                 }
             });
 
-            // Mostrar siguiente pregunta automáticamente después de 2 segundos
             setTimeout(() => {
                 resultElement.textContent = '';
                 socket.emit('playerReadyForQuestions');

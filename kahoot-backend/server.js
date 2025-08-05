@@ -154,6 +154,8 @@ io.on('connection', (socket) => {
         }
     });
 
+    
+
 socket.on('submitAnswer', ({ selectedOption }) => {
     const player = players[socket.id];
     if (!player) return;
@@ -167,7 +169,9 @@ socket.on('submitAnswer', ({ selectedOption }) => {
     const scenario = gameData[currentScenarioId];
     if (!scenario) return;
 
-    const questionsForRole = scenario.roles[player.role] || [];
+    const questionsForRole = scenario.roles[player.role];
+    if (!questionsForRole) return;
+
     const currentQuestion = questionsForRole[player.currentQuestionIndex];
     if (!currentQuestion) {
         io.to(socket.id).emit('error', 'No hay pregunta actual.');

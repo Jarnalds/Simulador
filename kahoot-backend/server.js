@@ -153,7 +153,7 @@ io.on('connection', (socket) => {
             io.to(socket.id).emit('gameFinishedForPlayer', { finalScore: player.score });
         }
     });
-    
+
 socket.on('submitAnswer', ({ selectedOption }) => {
     const player = players[socket.id];
     if (!player) return;
@@ -191,7 +191,38 @@ socket.on('submitAnswer', ({ selectedOption }) => {
         score: player.score,
         correctOption: currentQuestion.answer,
     });
-});  // <-- Aquí está el cierre correcto de la función
+
+    // Enviar siguiente pregunta automáticamente
+    const nextQuestion = questionsForRole[player.currentQuestionIndex];
+    if (nextQuestion) {
+        io.to(socket.id).emit('newQuestion', {
+            id: nextQuestion.id,
+            question: nextQuestion.question,
+            options: nextQuestion.options,
+        });
+    } else {
+        io.to(socket.id).emit('gameFinishedForPlayer', { finalScore: player.score });
+    }
+
+    // Si todos terminan, mandar resultados
+    const allFinished = Object.values(players).every(p => {
+        const qs = scenario.roles[p.role] || [];
+        return p.currentQuestionIndex >= qs.length;
+    });
+
+    if (allFinished) {
+        const finalScores = Object.values(players).map(p => ({
+            name: p.name,
+            role: p.role,
+            score: p.score,
+        }));
+        io.emit('finalResults', finalScores);
+        gameStarted = false;
+        acceptNewPlayers = true;
+        currentScenarioId = null;
+        console.log('Juego finalizado, resultados enviados');
+    }
+});
 
 
     // Enviar siguiente pregunta automáticamente

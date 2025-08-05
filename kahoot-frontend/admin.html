@@ -141,13 +141,20 @@
             });
         });
 
-        socket.on('playerJoined', (player) => {
-            const listItem = document.createElement('li');
-            listItem.id = `player-${player.id}`;
-            listItem.textContent = `${player.name} (${player.role})`;
-            playerList.appendChild(listItem);
-            adminMessages.textContent = `${player.name} se ha unido al juego.`;
-        });
+  socket.on('playerJoined', (player) => {
+    const playerId = `player-${player.id}`;
+    const existingPlayer = document.getElementById(playerId);
+
+    if (!existingPlayer) {
+        const listItem = document.createElement('li');
+        listItem.id = playerId;
+        listItem.textContent = `${player.name} (${player.role})`;
+        playerList.appendChild(listItem);
+        adminMessages.textContent = `${player.name} se ha unido al juego.`;
+    } else {
+        console.log(`El jugador ${player.name} ya está en la lista.`);
+    }
+});
 
         socket.on('playerLeft', (player) => {
             const listItem = document.getElementById(`player-${player.id}`);

@@ -5,9 +5,9 @@ const gameData = {
         description: 'Emergencia Médica en cortina 1',
         roles: {
             'Operador_1': [
-                { id: 'lp-prog-1', question: "¿Qué código se activa con este escenario?", options: ["Azul", "Amarillo", "Rojo", "Púrpura"], answer: 2 },
-                { id: 'lp-prog-2', question: "¿Cuál es el escenario que seguiremos?", options: ["Lockdown Completo", "Lockdown Parcial", "Evacuación Parcial", "Evacuación Total", "Cierre total, Repliegue a Zonas de Resguardo"], answer: 2 },
-                { id: 'lp-prog-3', question: "¿Cuál es la siguiente acción?", options: ["Una bandera para errores", "Un switch para activar/desactivar funciones", "Un tipo de test de rendimiento"], answer: 2 }
+                { id: 'lp-prog-1', question: "¿Qué código se activa con este escenario?", options: ["Azul", "Amarillo", "Rojo", "Púrpura"], answer: "Azul" },
+                { id: 'lp-prog-2', question: "¿Cuál es el escenario que seguiremos?", options: ["Lockdown Completo", "Lockdown Parcial", "Evacuación Parcial", "Evacuación Total", "Cierre total, Repliegue a Zonas de Resguardo"], answer: "Evacuación Parcial" },
+                { id: 'lp-prog-3', question: "¿Cuál es la siguiente acción?", options: ["Una bandera para errores", "Un switch para activar/desactivar funciones", "Un tipo de test de rendimiento"], answer: "Un switch para activar/desactivar funciones" }
             ],
             'Operador_2': [
                 { id: 'lp-dis-1', question: "¿Qué es el 'branding' en el contexto de un lanzamiento?", options: ["El diseño del producto físico", "La estrategia para construir la identidad de marca", "La interfaz de usuario del software"], answer: "La estrategia para construir la identidad de marca" },

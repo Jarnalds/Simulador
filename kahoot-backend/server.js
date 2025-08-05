@@ -154,7 +154,7 @@ io.on('connection', (socket) => {
         }
     });
 
-socket.on('submitAnswer', ({ answerIndex }) => {
+socket.on('submitAnswer', ({ selectedOption }) => {
     const player = players[socket.id];
     if (!player) return;
 
@@ -173,8 +173,8 @@ socket.on('submitAnswer', ({ answerIndex }) => {
         return;
     }
 
-    const isCorrect = currentQuestion.options[answerIndex] === currentQuestion.answer;
-
+    const isCorrect = selectedOption === currentQuestion.answer;
+    
     if (isCorrect) {
         player.score += 1;
     }

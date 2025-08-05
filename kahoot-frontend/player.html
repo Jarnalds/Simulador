@@ -134,21 +134,21 @@
             optionsContainer.innerHTML = '';
             resultElement.textContent = '';
 
-            question.options.forEach((option) => {
-                const button = document.createElement('button');
-                button.textContent = option;
-                button.classList.add('option-button');
-                button.addEventListener('click', () => submitAnswer(question.id, option, button));
-                optionsContainer.appendChild(button);
-            });
-        });
+          question.options.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.textContent = option;
+        button.classList.add('option-button');
+        button.addEventListener('click', () => submitAnswer(index));
+        optionsContainer.appendChild(button);
+    });
+});
 
-        function submitAnswer(questionId, selectedOption, clickedButton) {
-            optionsContainer.querySelectorAll('.option-button').forEach((btn) => {
-                btn.disabled = true;
-            });
-            socket.emit('submitAnswer', { questionId, selectedOption });
-        }
+function submitAnswer(answerIndex) {
+    optionsContainer.querySelectorAll('.option-button').forEach((btn) => {
+        btn.disabled = true;
+    });
+    socket.emit('submitAnswer', { answerIndex });
+}
 
         socket.on('answerResult', ({ correct, score, correctOption }) => {
             playerScoreElement.textContent = score;

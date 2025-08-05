@@ -3,7 +3,7 @@ const gameData = {
     // Escenario 1: Lanzamiento de Producto
     'lockdown-completo': {
     name: 'Lockdown Completo',
-    description: 'Activación de protocolo por amenaza interna o externa crítica que requiere confinamiento total.',
+    description: 'Activación de protocolo por amenaza interna o externa.',
     roles: {
         'Operador_1': [
             {

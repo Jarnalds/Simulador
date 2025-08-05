@@ -34,6 +34,22 @@ app.get('/', (req, res) => {
     res.send('Servidor de Simulacros (Backend) funcionando.');
 });
 
+// Endpoint para obtener roles únicos de todos los escenarios
+app.get('/roles', (req, res) => {
+  const rolesSet = new Set();
+
+  Object.values(gameData).forEach(scenario => {
+    Object.keys(scenario.roles).forEach(role => rolesSet.add(role));
+  });
+
+  const rolesArray = Array.from(rolesSet);
+  res.json(rolesArray);
+});
+
+
+
+
+
 // Ruta para descargar resultados en CSV
 app.get('/download-results', (req, res) => {
     if (!currentScenarioId || !gameData[currentScenarioId]) {

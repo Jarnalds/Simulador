@@ -33,7 +33,7 @@
         <div id="scenario-details" style="display: none;">
             <h2>Detalles del Escenario: <span id="scenarioDetailsTitle"></span></h2>
             <p id="scenarioDetailsDescription"></p>
-            <button id="startQuestionsBtn">¡Empezar Preguntas!</button>
+            <button id="startQuestionsBtn">Empezar Preguntas</button>
         </div>
 
         <div id="quiz-container" style="display: none;">
@@ -52,18 +52,14 @@
     </div>
 
     <audio id="gameStartSound">
-        <source
-            src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"
-            type="audio/ogg"
-        />
+        <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg" />
     </audio>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
-        const backendRenderUrl = 'https://simulador-0si7.onrender.com'; // Cambia a tu backend real
+        const backendRenderUrl = 'https://simulador-0si7.onrender.com';
         const socket = io(backendRenderUrl);
 
-        // Elementos DOM
         const playerNameInput = document.getElementById('playerNameInput');
         const playerRoleSelect = document.getElementById('playerRoleSelect');
         const joinGameBtn = document.getElementById('joinGameBtn');
@@ -73,22 +69,18 @@
         const gameLobby = document.getElementById('game-lobby');
         const scenarioDetails = document.getElementById('scenario-details');
         const scenarioDetailsTitle = document.getElementById('scenarioDetailsTitle');
-        const scenarioDetailsDescription =
-            document.getElementById('scenarioDetailsDescription');
+        const scenarioDetailsDescription = document.getElementById('scenarioDetailsDescription');
         const startQuestionsBtn = document.getElementById('startQuestionsBtn');
         const quizContainer = document.getElementById('quiz-container');
         const questionElement = document.getElementById('question');
         const optionsContainer = document.getElementById('options-container');
         const playerScoreElement = document.getElementById('playerScore');
         const resultElement = document.getElementById('result');
-
         const gameFinished = document.getElementById('game-finished');
         const finalPlayerScoreElement = document.getElementById('finalPlayerScore');
-
         const playerNameDisplay = document.getElementById('playerNameDisplay');
         const playerRoleDisplay = document.getElementById('playerRoleDisplay');
         const lobbyMessage = document.getElementById('lobbyMessage');
-
         const gameStartAudio = document.getElementById('gameStartSound');
 
         let currentQuestionId = null;
@@ -104,8 +96,7 @@
                 gameLobby.style.display = 'block';
                 playerMessages.textContent = '';
             } else {
-                playerMessages.textContent =
-                    'Por favor, ingresa tu nombre y selecciona un rol.';
+                playerMessages.textContent = 'Por favor, ingresa tu nombre y selecciona un rol.';
             }
         });
 
@@ -125,22 +116,12 @@
                 scenarioDetailsTitle.textContent = data.scenarioName;
                 scenarioDetailsDescription.textContent = data.scenarioDescription;
                 scenarioDetails.style.display = 'block';
-
-                gameStartAudio.play().catch((error) => {
-                    console.error('Error playing game start audio:', error);
-                });
+                gameStartAudio.play().catch(console.error);
             } else {
                 scenarioDetails.style.display = 'none';
                 quizContainer.style.display = 'block';
-                resultElement.textContent =
-                    '¡El simulacro ha comenzado! Esperando tu primera pregunta...';
-
-                gameStartAudio.play().catch((error) => {
-                    console.error(
-                        'Error playing game start audio (fallback):',
-                        error
-                    );
-                });
+                resultElement.textContent = '¡El simulacro ha comenzado!';
+                gameStartAudio.play().catch(console.error);
             }
         });
 
@@ -157,16 +138,8 @@
                 const button = document.createElement('button');
                 button.textContent = option;
                 button.classList.add('option-button');
-                button.addEventListener('click', () =>
-                    submitAnswer(question.id, option, button)
-                );
+                button.addEventListener('click', () => submitAnswer(question.id, option, button));
                 optionsContainer.appendChild(button);
-            });
-
-            // Habilitar botones
-            optionsContainer.querySelectorAll('.option-button').forEach((btn) => {
-                btn.disabled = false;
-                btn.classList.remove('correct');
             });
         });
 
@@ -180,20 +153,22 @@
         socket.on('answerResult', ({ correct, score, correctOption }) => {
             playerScoreElement.textContent = score;
 
-            if (correct) {
-                resultElement.textContent = '¡Correcto! 🎉';
-                resultElement.style.color = '#4CAF50';
-            } else {
-                resultElement.textContent = `Incorrecto. La respuesta correcta era: ${correctOption} 😢`;
-                resultElement.style.color = '#F44336';
-            }
+            resultElement.textContent = correct
+                ? '¡Correcto! 🎉'
+                : `Incorrecto. La respuesta correcta era: ${correctOption} 😢`;
+            resultElement.style.color = correct ? '#4CAF50' : '#F44336';
 
-            // Marcar la respuesta correcta
             optionsContainer.querySelectorAll('.option-button').forEach((btn) => {
                 if (btn.textContent === correctOption) {
                     btn.classList.add('correct');
                 }
             });
+
+            // Mostrar siguiente pregunta automáticamente después de 2 segundos
+            setTimeout(() => {
+                resultElement.textContent = '';
+                socket.emit('playerReadyForQuestions');
+            }, 2000);
         });
 
         socket.on('gameFinishedForPlayer', ({ finalScore }) => {
@@ -206,8 +181,7 @@
         });
 
         socket.on('waitingForGameToStart', () => {
-            lobbyMessage.textContent =
-                'Esperando que el administrador inicie el simulacro...';
+            lobbyMessage.textContent = 'Esperando que el administrador inicie el simulacro...';
         });
 
         socket.on('error', (message) => {
@@ -215,8 +189,7 @@
             if (message.includes('Ya estás conectado')) {
                 joinForm.style.display = 'none';
                 gameLobby.style.display = 'block';
-                lobbyMessage.textContent =
-                    'Ya estás conectado al juego. Esperando que el administrador inicie/continúe.';
+                lobbyMessage.textContent = 'Ya estás conectado al juego. Esperando que el administrador inicie/continúe.';
             } else if (message.includes('inscripciones están cerradas')) {
                 playerMessages.textContent = message;
                 joinGameBtn.disabled = true;
@@ -227,9 +200,7 @@
 
         socket.on('adminDisconnectedNotification', (message) => {
             playerMessages.textContent = message;
-            setTimeout(() => {
-                window.location.reload();
-            }, 3000);
+            setTimeout(() => window.location.reload(), 3000);
         });
 
         socket.on('disconnect', () => {

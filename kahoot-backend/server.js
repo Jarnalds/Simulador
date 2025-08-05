@@ -153,6 +153,7 @@ io.on('connection', (socket) => {
             io.to(socket.id).emit('gameFinishedForPlayer', { finalScore: player.score });
         }
     });
+    
 socket.on('submitAnswer', ({ selectedOption }) => {
     const player = players[socket.id];
     if (!player) return;
@@ -190,9 +191,8 @@ socket.on('submitAnswer', ({ selectedOption }) => {
         score: player.score,
         correctOption: currentQuestion.answer,
     });
+});  // <-- Aquí está el cierre correcto de la función
 
-    // El resto del código para enviar siguiente pregunta o finalizar...
-});
 
     // Enviar siguiente pregunta automáticamente
     const nextQuestion = questionsForRole[player.currentQuestionIndex];

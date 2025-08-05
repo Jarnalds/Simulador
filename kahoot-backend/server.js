@@ -122,7 +122,10 @@ io.on('connection', (socket) => {
             }));
 
             // Emitir evento 'adminConnected' con escenarios
-            io.to(adminSocketId).emit('adminConnected', { scenarios: scenariosList });
+            const scenariosList = Object.entries(gameData).map(([id, data]) => ({
+  id,
+  name: data.name
+}));
 
             // Enviar lista de jugadores actuales al admin
             io.to(adminSocketId).emit('currentPlayers', Object.values(players).map(p => ({

@@ -161,6 +161,9 @@ socket.on('submitAnswer', ({ selectedOption }) => {
     if (!gameStarted || !currentScenarioId) {
         io.to(socket.id).emit('error', 'El juego no está activo.');
         return;
+        console.log('Respuesta recibida:', answerIndex || selectedOption);
+        console.log('Respuesta correcta:', currentQuestion.answer);
+
     }
 
     const scenario = gameData[currentScenarioId];
@@ -174,7 +177,7 @@ socket.on('submitAnswer', ({ selectedOption }) => {
     }
 
     const isCorrect = selectedOption === currentQuestion.answer;
-    
+
     if (isCorrect) {
         player.score += 1;
     }

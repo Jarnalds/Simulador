@@ -177,4 +177,17 @@ const gameData = {
         },
         {
           id: 'cc-com-3',
-          question: "¿Qué canal es vital para informar rápida
+          question: "¿Qué canal es vital para informar rápidamente a los afectados?",
+          options: [
+            "Vallas publicitarias",
+            "Email y sitio web oficial",
+            "Redes sociales personales"
+          ],
+          correctAnswer: 1
+        }
+      ]
+    }
+  }
+};
+
+module.exports = gameData;

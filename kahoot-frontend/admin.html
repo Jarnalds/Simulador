@@ -104,26 +104,22 @@
 
         // --- Eventos de Socket.IO ---
 
-        socket.on('adminConnected', () => {
-            connectionForm.style.display = 'none';
-            adminControls.style.display = 'block';
-            adminNameDisplay.textContent = adminNameInput.value;
-            adminMessages.textContent = '¡Bienvenido, administrador! Conectado al juego. Selecciona un escenario.';
-            
-            // Llenar el selector de escenarios (esto es una lista de ejemplo, podrías pedirla al backend)
-            // En un futuro, el backend podría enviar una lista de {id: 'lanzamiento-producto', name: 'Lanzamiento de Producto'}
-            scenarioSelect.innerHTML = '<option value="">--Selecciona--</option>';
-            const scenarios = { // ESTOS SON LOS IDS Y NOMBRES DE EJEMPLO DE TU scenarios.js
-                'lanzamiento-producto': 'Lanzamiento de Producto',
-                'crisis-ciberseguridad': 'Crisis de Ciberseguridad'
-            };
-            for (const id in scenarios) {
-                const option = document.createElement('option');
-                option.value = id;
-                option.textContent = scenarios[id];
-                scenarioSelect.appendChild(option);
-            }
-        });
+       socket.on('adminConnected', (data) => {
+    connectionForm.style.display = 'none';
+    adminControls.style.display = 'block';
+    adminNameDisplay.textContent = adminNameInput.value;
+    adminMessages.textContent = '¡Bienvenido, administrador! Conectado al juego. Selecciona un escenario.';
+    
+    scenarioSelect.innerHTML = '<option value="">--Selecciona--</option>';
+    
+    data.scenarios.forEach(scenario => {
+        const option = document.createElement('option');
+        option.value = scenario.id;
+        option.textContent = scenario.name;
+        scenarioSelect.appendChild(option);
+    });
+});
+
 
         socket.on('scenarioSelected', (scenarioName) => {
             activeScenarioDisplay.textContent = scenarioName;

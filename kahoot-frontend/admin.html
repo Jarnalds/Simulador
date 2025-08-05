@@ -104,21 +104,21 @@
 
         // --- Eventos de Socket.IO ---
 
-       socket.on('adminConnected', (data) => {
+       socket.on('adminConnected', ({ scenarios }) => {
     connectionForm.style.display = 'none';
     adminControls.style.display = 'block';
     adminNameDisplay.textContent = adminNameInput.value;
     adminMessages.textContent = '¡Bienvenido, administrador! Conectado al juego. Selecciona un escenario.';
-    
+
     scenarioSelect.innerHTML = '<option value="">--Selecciona--</option>';
-    
-    data.scenarios.forEach(scenario => {
+    scenarios.forEach(({ id, name }) => {
         const option = document.createElement('option');
-        option.value = scenario.id;
-        option.textContent = scenario.name;
+        option.value = id;
+        option.textContent = name;
         scenarioSelect.appendChild(option);
     });
 });
+
 
 
         socket.on('scenarioSelected', (scenarioName) => {

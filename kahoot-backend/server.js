@@ -104,23 +104,38 @@ console.log('6. Rutas HTTP configuradas: "/" y "/download-results".');
 io.on('connection', (socket) => {
     console.log('Nuevo usuario conectado:', socket.id);
 
-    // Evento 'joinGame': Un usuario intenta unirse como jugador o administrador
     socket.on('joinGame', ({ name, role, isAdmin }) => {
         console.log(`Evento joinGame recibido de ${socket.id}: ${name}, ${role}, Admin: ${isAdmin}`);
+
         if (isAdmin) {
-            // Lógica para el administrador
             if (adminSocketId) {
                 socket.emit('error', 'Ya hay un administrador conectado.');
                 console.log(`Intento de conexión de admin ${name} fallido: ya hay uno.`);
                 return;
             }
-            adminSocketId = socket.id; // Asignar el socket actual como administrador
-            io.to(adminSocketId).emit('adminConnected'); // Notificar al admin que se conectó exitosamente
-            io.to(adminSocketId).emit('currentPlayers', Object.values(players).map(p => ({ id: p.id, name: p.name, role: p.role })));
+            adminSocketId = socket.id;
+
+            // Enviar lista actualizada de escenarios al admin
+            const scenariosList = Object.entries(gameData).map(([id, data]) => ({
+                id,
+                name: data.name
+            }));
+
+            // Emitir evento 'adminConnected' con escenarios
+            io.to(adminSocketId).emit('adminConnected', { scenarios: scenariosList });
+
+            // Enviar lista de jugadores actuales al admin
+            io.to(adminSocketId).emit('currentPlayers', Object.values(players).map(p => ({
+                id: p.id,
+                name: p.name,
+                role: p.role
+            })));
+
             console.log(`Admin ${name} conectado: ${socket.id}`);
+
         } else {
-            // Lógica para los jugadores
-            if (!acceptNewPlayers) { // No permitir nuevas conexiones si las inscripciones están cerradas
+            // Lógica para jugadores
+            if (!acceptNewPlayers) {
                 socket.emit('error', 'El juego ha cerrado las inscripciones o ya ha finalizado.');
                 console.log(`Jugador ${name} intentó unirse, pero las inscripciones están cerradas.`);
                 return;
@@ -130,17 +145,18 @@ io.on('connection', (socket) => {
                 console.log(`Intento de conexión de jugador ${name} fallido: ya conectado.`);
                 return;
             }
+
             players[socket.id] = { id: socket.id, name, role, score: 0, currentQuestionIndex: 0 };
             console.log(`Jugador ${name} (${role}) conectado: ${socket.id}`);
-            io.emit('playerJoined', { id: socket.id, name, role }); // Emitir a todos que un jugador se unió
 
-            if (adminSocketId) { // Notificar al admin si ya está conectado
+            // Notificar a todos los usuarios que un jugador se unió
+            io.emit('playerJoined', { id: socket.id, name, role });
+
+            // Notificar al admin si está conectado
+            if (adminSocketId) {
                 io.to(adminSocketId).emit('playerJoined', { id: socket.id, name, role });
             }
 
-            // Aquí YA NO enviamos la primera pregunta si el juego está iniciado.
-            // Ahora el jugador recibirá el evento 'gameStarted' con los detalles del escenario y luego
-            // enviará 'playerReadyForQuestions' cuando esté listo.
             if (gameStarted && currentScenarioId) {
                 const scenarioInfo = gameData[currentScenarioId];
                 if (scenarioInfo) {
@@ -158,6 +174,10 @@ io.on('connection', (socket) => {
             }
         }
     });
+
+    // ... resto de eventos y lógica socket (submitAnswer, startGame, etc.) aquí
+});
+
 
     // Evento 'selectScenario': El administrador selecciona el escenario de juego
     socket.on('selectScenario', (scenarioId) => {

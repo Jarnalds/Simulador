@@ -1,40 +1,44 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Simulacros - Jugador</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
     <div class="container">
         <h1>Simulacros - Jugador</h1>
+
         <div id="join-form">
-            <input type="text" id="playerNameInput" placeholder="Tu Nombre" required>
+            <input type="text" id="playerNameInput" placeholder="Tu Nombre" required />
             <select id="playerRoleSelect">
                 <option value="">Selecciona tu rol</option>
                 <option value="Operador_1">Operador 01</option>
                 <option value="diseñador">Diseñador</option>
-                <option value="programador">Comunicador</option>
+                <option value="comunicador">Comunicador</option>
             </select>
             <button id="joinGameBtn">Unirse al Juego</button>
             <div id="playerMessages" style="color: red; margin-top: 10px;"></div>
         </div>
 
         <div id="game-lobby" style="display: none;">
-            <p>¡Bienvenido, <strong id="playerNameDisplay"></strong> (<strong id="playerRoleDisplay"></strong>)!</p>
+            <p>
+                ¡Bienvenido, <strong id="playerNameDisplay"></strong> (
+                <strong id="playerRoleDisplay"></strong>)!
+            </p>
             <p id="lobbyMessage">Esperando que el administrador inicie el juego...</p>
-            </div>
+        </div>
 
         <div id="scenario-details" style="display: none;">
             <h2>Detalles del Escenario: <span id="scenarioDetailsTitle"></span></h2>
             <p id="scenarioDetailsDescription"></p>
             <button id="startQuestionsBtn">¡Empezar Preguntas!</button>
         </div>
+
         <div id="quiz-container" style="display: none;">
             <h2 id="question"></h2>
-            <div id="options-container" class="options-grid">
-            </div>
+            <div id="options-container" class="options-grid"></div>
             <p>Puntuación: <span id="playerScore">0</span></p>
             <div id="result"></div>
         </div>
@@ -48,19 +52,18 @@
     </div>
 
     <audio id="gameStartSound">
-  <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg">
-</audio>
-
+        <source
+            src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"
+            type="audio/ogg"
+        />
+    </audio>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
-        // backend/kahoot-frontend/player.html script
-
-        // *** IMPORTANT: Change this URL to your deployed backend URL (Render, Heroku, etc.) ***
-        const backendRenderUrl = 'https://simulador-0si7.onrender.com'; // Your Render URL!
+        const backendRenderUrl = 'https://simulador-0si7.onrender.com'; // Cambia a tu backend real
         const socket = io(backendRenderUrl);
 
-        // DOM element references
+        // Elementos DOM
         const playerNameInput = document.getElementById('playerNameInput');
         const playerRoleSelect = document.getElementById('playerRoleSelect');
         const joinGameBtn = document.getElementById('joinGameBtn');
@@ -68,30 +71,28 @@
 
         const joinForm = document.getElementById('join-form');
         const gameLobby = document.getElementById('game-lobby');
+        const scenarioDetails = document.getElementById('scenario-details');
+        const scenarioDetailsTitle = document.getElementById('scenarioDetailsTitle');
+        const scenarioDetailsDescription =
+            document.getElementById('scenarioDetailsDescription');
+        const startQuestionsBtn = document.getElementById('startQuestionsBtn');
         const quizContainer = document.getElementById('quiz-container');
-        const gameFinished = document.getElementById('game-finished');
-
-        const playerNameDisplay = document.getElementById('playerNameDisplay');
-        const playerRoleDisplay = document.getElementById('playerRoleDisplay');
-        const lobbyMessage = document.getElementById('lobbyMessage');
         const questionElement = document.getElementById('question');
         const optionsContainer = document.getElementById('options-container');
         const playerScoreElement = document.getElementById('playerScore');
         const resultElement = document.getElementById('result');
+
+        const gameFinished = document.getElementById('game-finished');
         const finalPlayerScoreElement = document.getElementById('finalPlayerScore');
-        
-        // --- NEW REFERENCES FOR AUDIO AND SCENARIO DETAILS ---
-        const gameStartAudio = document.getElementById('gameStartAudio');
-        // const scenarioDisplay = document.getElementById('scenarioDisplay'); // This element is replaced by scenarioDetailsTitle/Description
-        const scenarioDetails = document.getElementById('scenario-details');
-        const scenarioDetailsTitle = document.getElementById('scenarioDetailsTitle');
-        const scenarioDetailsDescription = document.getElementById('scenarioDetailsDescription');
-        const startQuestionsBtn = document.getElementById('startQuestionsBtn');
-        // --- END NEW REFERENCES ---
+
+        const playerNameDisplay = document.getElementById('playerNameDisplay');
+        const playerRoleDisplay = document.getElementById('playerRoleDisplay');
+        const lobbyMessage = document.getElementById('lobbyMessage');
+
+        const gameStartAudio = document.getElementById('gameStartSound');
 
         let currentQuestionId = null;
 
-        // --- DOM Event Listeners ---
         joinGameBtn.addEventListener('click', () => {
             const name = playerNameInput.value.trim();
             const role = playerRoleSelect.value;
@@ -103,111 +104,110 @@
                 gameLobby.style.display = 'block';
                 playerMessages.textContent = '';
             } else {
-                playerMessages.textContent = 'Por favor, ingresa tu nombre y selecciona un rol.';
+                playerMessages.textContent =
+                    'Por favor, ingresa tu nombre y selecciona un rol.';
             }
         });
 
-        // NEW: Listener for the "Start Questions" button
         startQuestionsBtn.addEventListener('click', () => {
-            scenarioDetails.style.display = 'none'; // Hide scenario details
-            quizContainer.style.display = 'block'; // Show the quiz container
-            socket.emit('playerReadyForQuestions'); // Notify the backend that the player is ready
-            // The backend will send the first question upon receiving this event.
+            scenarioDetails.style.display = 'none';
+            quizContainer.style.display = 'block';
+            socket.emit('playerReadyForQuestions');
         });
 
-        // --- Socket.IO Events ---
-
-        // Modified: Now receives data, including scenario name AND description
         socket.on('gameStarted', (data) => {
             gameLobby.style.display = 'none';
-            quizContainer.style.display = 'none'; // Hide quiz container initially
-            resultElement.textContent = ''; // Clear any previous messages
-            playerScoreElement.textContent = '0'; // Reset score display for a new game
+            quizContainer.style.display = 'none';
+            resultElement.textContent = '';
+            playerScoreElement.textContent = '0';
 
             if (data && data.scenarioName && data.scenarioDescription) {
                 scenarioDetailsTitle.textContent = data.scenarioName;
                 scenarioDetailsDescription.textContent = data.scenarioDescription;
-                scenarioDetails.style.display = 'block'; // Show the new scenario details section
-                gameStartAudio.play().catch(error => {
-                    console.error("Error playing game start audio:", error);
+                scenarioDetails.style.display = 'block';
+
+                gameStartAudio.play().catch((error) => {
+                    console.error('Error playing game start audio:', error);
                 });
             } else {
-                // Fallback: If scenario data is incomplete, directly go to quiz (or show error)
                 scenarioDetails.style.display = 'none';
                 quizContainer.style.display = 'block';
-                resultElement.textContent = '¡El simulacro ha comenzado! Esperando tu primera pregunta...';
-                gameStartAudio.play().catch(error => {
-                    console.error("Error playing game start audio (fallback):", error);
+                resultElement.textContent =
+                    '¡El simulacro ha comenzado! Esperando tu primera pregunta...';
+
+                gameStartAudio.play().catch((error) => {
+                    console.error(
+                        'Error playing game start audio (fallback):',
+                        error
+                    );
                 });
-                console.warn('Incomplete scenario data received at game start. Proceeding directly to quiz.');
             }
         });
 
-        // Moved from 'gameStarted' to be triggered by 'playerReadyForQuestions' event from player
         socket.on('newQuestion', (question) => {
-            quizContainer.style.display = 'block'; // Ensure quiz container is visible
-            scenarioDetails.style.display = 'none'; // Ensure scenario details are hidden
+            quizContainer.style.display = 'block';
+            scenarioDetails.style.display = 'none';
 
             currentQuestionId = question.id;
             questionElement.textContent = question.question;
             optionsContainer.innerHTML = '';
-            resultElement.textContent = ''; // Clear previous question result
-            
-            question.options.forEach(option => {
+            resultElement.textContent = '';
+
+            question.options.forEach((option) => {
                 const button = document.createElement('button');
                 button.textContent = option;
                 button.classList.add('option-button');
-                // On click, send the answer
-                button.addEventListener('click', () => submitAnswer(question.id, option, button));
+                button.addEventListener('click', () =>
+                    submitAnswer(question.id, option, button)
+                );
                 optionsContainer.appendChild(button);
             });
-            optionsContainer.querySelectorAll('.option-button').forEach(btn => btn.disabled = false); // Enable buttons
-        });
 
-        socket.on('playGameStartSound', () => {
-            // This event is still emitted from backend but integrated into gameStarted listener above
-            // Keeping it here for reference in case you want to decouple the sound
-        });
-
-        socket.on('waitingForGameToStart', () => {
-            lobbyMessage.textContent = 'Esperando que el administrador inicie el simulacro...';
-            // scenarioDisplay.style.display = 'none'; // This element is no longer directly used in lobby
+            // Habilitar botones
+            optionsContainer.querySelectorAll('.option-button').forEach((btn) => {
+                btn.disabled = false;
+                btn.classList.remove('correct');
+            });
         });
 
         function submitAnswer(questionId, selectedOption, clickedButton) {
-            optionsContainer.querySelectorAll('.option-button').forEach(btn => btn.disabled = true); // Disable all buttons
+            optionsContainer.querySelectorAll('.option-button').forEach((btn) => {
+                btn.disabled = true;
+            });
             socket.emit('submitAnswer', { questionId, selectedOption });
         }
 
         socket.on('answerResult', ({ correct, score, correctOption }) => {
             playerScoreElement.textContent = score;
+
             if (correct) {
                 resultElement.textContent = '¡Correcto! 🎉';
                 resultElement.style.color = '#4CAF50';
-                optionsContainer.querySelectorAll('.option-button').forEach(btn => {
-                    if (btn.textContent === correctOption) {
-                        btn.classList.add('correct');
-                    }
-                });
             } else {
                 resultElement.textContent = `Incorrecto. La respuesta correcta era: ${correctOption} 😢`;
                 resultElement.style.color = '#F44336';
-                optionsContainer.querySelectorAll('.option-button').forEach(btn => {
-                    if (btn.textContent === correctOption) {
-                        btn.classList.add('correct');
-                    }
-                });
             }
+
+            // Marcar la respuesta correcta
+            optionsContainer.querySelectorAll('.option-button').forEach((btn) => {
+                if (btn.textContent === correctOption) {
+                    btn.classList.add('correct');
+                }
+            });
         });
 
         socket.on('gameFinishedForPlayer', ({ finalScore }) => {
             quizContainer.style.display = 'none';
             gameLobby.style.display = 'none';
             joinForm.style.display = 'none';
-            scenarioDetails.style.display = 'none'; // Hide scenario details on game finish
+            scenarioDetails.style.display = 'none';
             gameFinished.style.display = 'block';
             finalPlayerScoreElement.textContent = finalScore;
-            // scenarioDisplay.style.display = 'none'; // No longer directly used
+        });
+
+        socket.on('waitingForGameToStart', () => {
+            lobbyMessage.textContent =
+                'Esperando que el administrador inicie el simulacro...';
         });
 
         socket.on('error', (message) => {
@@ -215,7 +215,8 @@
             if (message.includes('Ya estás conectado')) {
                 joinForm.style.display = 'none';
                 gameLobby.style.display = 'block';
-                lobbyMessage.textContent = 'Ya estás conectado al juego. Esperando que el administrador inicie/continúe.';
+                lobbyMessage.textContent =
+                    'Ya estás conectado al juego. Esperando que el administrador inicie/continúe.';
             } else if (message.includes('inscripciones están cerradas')) {
                 playerMessages.textContent = message;
                 joinGameBtn.disabled = true;
@@ -226,7 +227,9 @@
 
         socket.on('adminDisconnectedNotification', (message) => {
             playerMessages.textContent = message;
-            setTimeout(() => { window.location.reload(); }, 3000);
+            setTimeout(() => {
+                window.location.reload();
+            }, 3000);
         });
 
         socket.on('disconnect', () => {
@@ -234,12 +237,11 @@
             joinForm.style.display = 'block';
             gameLobby.style.display = 'none';
             quizContainer.style.display = 'none';
-            scenarioDetails.style.display = 'none'; // Hide scenario details on disconnect
+            scenarioDetails.style.display = 'none';
             gameFinished.style.display = 'none';
             playerNameInput.disabled = false;
             playerRoleSelect.disabled = false;
             joinGameBtn.disabled = false;
-            // scenarioDisplay.style.display = 'none'; // No longer directly used
         });
 
         socket.on('reconnect', () => {

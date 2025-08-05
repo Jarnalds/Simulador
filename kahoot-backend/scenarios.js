@@ -1,27 +1,93 @@
 // scenarios.js (o gameData.js)
 const gameData = {
     // Escenario 1: Lanzamiento de Producto
-    'lanzamiento-producto': {
-        name: 'Lanzamiento de Producto', // Nombre amigable del escenario
-        description: 'Te encuentras en la fase final de preparación para el gran lanzamiento', // <-- Descripción completa
-        roles: { // Esta es la línea correcta para el objeto de roles
-            'programador': [
-                { id: 'lp-prog-1', question: "¿Qué metodología de desarrollo es ideal para un lanzamiento rápido?", options: ["Waterfall", "Agile", "DevOps"], answer: "Agile" },
-                { id: 'lp-prog-2', question: "¿Qué se busca minimizar con un MVP?", options: ["Riesgo y tiempo de desarrollo", "Características y costo", "Marketing y publicidad"], answer: "Riesgo y tiempo de desarrollo" },
-                { id: 'lp-prog-3', question: "¿Qué es una 'feature flag'?", options: ["Una bandera para errores", "Un switch para activar/desactivar funciones", "Un tipo de test de rendimiento"], answer: "Un switch para activar/desactivar funciones" }
-            ],
-            'diseñador': [
-                { id: 'lp-dis-1', question: "¿Qué es el 'branding' en el contexto de un lanzamiento?", options: ["El diseño del producto físico", "La estrategia para construir la identidad de marca", "La interfaz de usuario del software"], answer: "La estrategia para construir la identidad de marca" },
-                { id: 'lp-dis-2', question: "¿Qué importancia tiene el 'feedback' del usuario post-lanzamiento?", options: ["Solo para marketing", "No es importante", "Crucial para iterar y mejorar el producto"], answer: "Crucial para iterar y mejorar el producto" },
-                { id: 'lp-dis-3', question: "¿Qué es un 'mood board'?", options: ["Un panel de estado de ánimo", "Una colección de inspiración visual", "Un gráfico de flujo de usuario"], answer: "Una colección de inspiración visual" }
-            ],
-            'comunicador': [
-                { id: 'lp-com-1', question: "¿Qué tipo de evento es común antes de un lanzamiento importante?", options: ["Hackathon", "Press Release", "Code Review"], answer: "Press Release" },
-                { id: 'lp-com-2', question: "¿Qué métrica mide la difusión de la marca en redes?", options: ["ROI", "Engagement", "Alcance"], answer: "Alcance" },
-                { id: 'lp-com-3', question: "¿Qué es el 'elevator pitch'?", options: ["Un discurso de ventas largo", "Un resumen conciso del producto o idea", "Un tipo de presentación de diapositivas"], answer: "Un resumen conciso del producto o idea" }
-            ]
-        }
-    },
+    'lockdown-completo': {
+    name: 'Lockdown Completo',
+    description: 'Activación de protocolo por amenaza interna o externa crítica que requiere confinamiento total.',
+    roles: {
+        'Operador_1': [
+            {
+                id: 'lc-1',
+                question: "¿Cuál es la primera acción ante una situación de lockdown completo?",
+                options: [
+                    "Esperar instrucciones del supervisor",
+                    "Salir del edificio rápidamente",
+                    "Activar botón de pánico",
+                    "Llamar al proveedor de seguridad privada",
+                    "Esconderse en la zona de descanso",
+                    "Cerrar cortinas metálicas"
+                ],
+                answer: "Activar botón de pánico"
+            },
+            {
+                id: 'lc-2',
+                question: "¿Qué información se debe recabar durante un evento de lockdown?",
+                options: [
+                    "Ubicación del café más cercano",
+                    "Datos del último simulacro",
+                    "Información general del evento (tipo, lugar, hora)",
+                    "Clima actual",
+                    "Nombre del CEO",
+                    "Número de visitantes registrados"
+                ],
+                answer: "Información general del evento (tipo, lugar, hora)"
+            },
+            {
+                id: 'lc-3',
+                question: "¿A qué número se debe llamar en caso de una emergencia crítica?",
+                options: [
+                    "066",
+                    "01800-MELI-SOS",
+                    "123",
+                    "911",
+                    "112",
+                    "800-EMERGENCIA"
+                ],
+                answer: "911"
+            },
+            {
+                id: 'lc-4',
+                question: "¿Qué debe activarse internamente para comunicar el evento?",
+                options: [
+                    "Alarma sísmica",
+                    "Sistema de luces de emergencia",
+                    "Escalamiento de comunicación interna (LP)",
+                    "Correo masivo a todos",
+                    "Protocolo de redes sociales",
+                    "Boletín informativo mensual"
+                ],
+                answer: "Escalamiento de comunicación interna (LP)"
+            },
+            {
+                id: 'lc-5',
+                question: "¿A qué entidad interna debes informar del evento?",
+                options: [
+                    "Personal de limpieza",
+                    "HR (Recursos Humanos)",
+                    "El área de logística",
+                    "SOC (Hytera / WhatsApp)",
+                    "Administración de ventas",
+                    "Capacitación y desarrollo"
+                ],
+                answer: "SOC (Hytera / WhatsApp)"
+            },
+            {
+                id: 'lc-6',
+                question: "¿Qué rol debe asumir el operador ante el personal MELI durante el evento?",
+                options: [
+                    "Observador silencioso",
+                    "Intermediario con prensa externa",
+                    "Vocero, compartiendo actualizaciones",
+                    "Controlador de accesos",
+                    "Encargado de cámaras",
+                    "Moderador de conflictos internos"
+                ],
+                answer: "Vocero, compartiendo actualizaciones"
+            }
+        ]
+    }
+}
+
     // Escenario 2: Crisis de Ciberseguridad
     'crisis-ciberseguridad': {
         name: 'Crisis de Ciberseguridad',

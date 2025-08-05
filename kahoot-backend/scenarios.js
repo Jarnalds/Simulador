@@ -86,8 +86,7 @@ const gameData = {
             }
         ]
     }
-}
-
+},
     // Escenario 2: Crisis de Ciberseguridad
     'crisis-ciberseguridad': {
         name: 'Crisis de Ciberseguridad',

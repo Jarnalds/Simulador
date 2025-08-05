@@ -154,113 +154,77 @@ io.on('connection', (socket) => {
         }
     });
 
-    
+    socket.on('submitAnswer', ({ selectedOption }) => {
+        const player = players[socket.id];
+        if (!player) return;
 
-socket.on('submitAnswer', ({ selectedOption }) => {
-    const player = players[socket.id];
-    if (!player) return;
+        if (!gameStarted || !currentScenarioId) {
+            console.log('Respuesta recibida:', selectedOption);
+            io.to(socket.id).emit('error', 'El juego no está activo.');
+            return;
+        }
 
-    if (!gameStarted || !currentScenarioId) {
-        console.log('Respuesta recibida:', selectedOption);
-        io.to(socket.id).emit('error', 'El juego no está activo.');
-        return;
-    }
+        const scenario = gameData[currentScenarioId];
+        if (!scenario) return;
 
-    const scenario = gameData[currentScenarioId];
-    if (!scenario) return;
+        const questionsForRole = scenario.roles[player.role];
+        if (!questionsForRole) return;
 
-    const questionsForRole = scenario.roles[player.role];
-    if (!questionsForRole) return;
+        const currentQuestion = questionsForRole[player.currentQuestionIndex];
+        if (!currentQuestion) {
+            io.to(socket.id).emit('error', 'No hay pregunta actual.');
+            return;
+        }
 
-    const currentQuestion = questionsForRole[player.currentQuestionIndex];
-    if (!currentQuestion) {
-        io.to(socket.id).emit('error', 'No hay pregunta actual.');
-        return;
-    }
+        console.log(`Jugador: ${player.name}`);
+        console.log(`Respuesta recibida: "${selectedOption}"`);
+        console.log(`Respuesta correcta: "${currentQuestion.answer}"`);
 
-    console.log(`Jugador: ${player.name}`);
-    console.log(`Respuesta recibida: "${selectedOption}"`);
-    console.log(`Respuesta correcta: "${currentQuestion.answer}"`);
+        const isCorrect = selectedOption === currentQuestion.answer;
 
-    const isCorrect = selectedOption === currentQuestion.answer;
+        if (isCorrect) {
+            player.score += 1;
+        }
 
-    if (isCorrect) {
-        player.score += 1;
-    }
+        player.currentQuestionIndex++;
 
-    player.currentQuestionIndex++;
-
-    io.to(socket.id).emit('answerResult', {
-        correct: isCorrect,
-        score: player.score,
-        correctOption: currentQuestion.answer,
-    });
-
-    // Enviar siguiente pregunta automáticamente
-    const nextQuestion = questionsForRole[player.currentQuestionIndex];
-    if (nextQuestion) {
-        io.to(socket.id).emit('newQuestion', {
-            id: nextQuestion.id,
-            question: nextQuestion.question,
-            options: nextQuestion.options,
+        io.to(socket.id).emit('answerResult', {
+            correct: isCorrect,
+            score: player.score,
+            correctOption: currentQuestion.answer,
         });
-    } else {
-        io.to(socket.id).emit('gameFinishedForPlayer', { finalScore: player.score });
-    }
 
-    // Si todos terminan, mandar resultados
-    const allFinished = Object.values(players).every(p => {
-        const qs = scenario.roles[p.role] || [];
-        return p.currentQuestionIndex >= qs.length;
-    });
+        // Enviar siguiente pregunta automáticamente
+        const nextQuestion = questionsForRole[player.currentQuestionIndex];
+        if (nextQuestion) {
+            io.to(socket.id).emit('newQuestion', {
+                id: nextQuestion.id,
+                question: nextQuestion.question,
+                options: nextQuestion.options,
+            });
+        } else {
+            io.to(socket.id).emit('gameFinishedForPlayer', { finalScore: player.score });
+        }
 
-    if (allFinished) {
-        const finalScores = Object.values(players).map(p => ({
-            name: p.name,
-            role: p.role,
-            score: p.score,
-        }));
-        io.emit('finalResults', finalScores);
-        gameStarted = false;
-        acceptNewPlayers = true;
-        currentScenarioId = null;
-        console.log('Juego finalizado, resultados enviados');
-    }
-});
-
-
-    // Enviar siguiente pregunta automáticamente
-    const nextQuestion = questionsForRole[player.currentQuestionIndex];
-    if (nextQuestion) {
-        io.to(socket.id).emit('newQuestion', {
-            id: nextQuestion.id,
-            question: nextQuestion.question,
-            options: nextQuestion.options,
+        // Si todos terminan, mandar resultados
+        const allFinished = Object.values(players).every(p => {
+            const qs = scenario.roles[p.role] || [];
+            return p.currentQuestionIndex >= qs.length;
         });
-    } else {
-        io.to(socket.id).emit('gameFinishedForPlayer', { finalScore: player.score });
-    }
 
-    // Si todos terminan, mandar resultados
-    const allFinished = Object.values(players).every(p => {
-        const qs = scenario.roles[p.role] || [];
-        return p.currentQuestionIndex >= qs.length;
+        if (allFinished) {
+            const finalScores = Object.values(players).map(p => ({
+                name: p.name,
+                role: p.role,
+                score: p.score,
+            }));
+            io.emit('finalResults', finalScores);
+            gameStarted = false;
+            acceptNewPlayers = true;
+            currentScenarioId = null;
+            console.log('Juego finalizado, resultados enviados');
+        }
     });
-
-    if (allFinished) {
-        const finalScores = Object.values(players).map(p => ({
-            name: p.name,
-            role: p.role,
-            score: p.score,
-        }));
-        io.emit('finalResults', finalScores);
-        gameStarted = false;
-        acceptNewPlayers = true;
-        currentScenarioId = null;
-        console.log('Juego finalizado, resultados enviados');
-    }
-});
-
 
     socket.on('disconnect', () => {
         console.log(`Usuario desconectado: ${socket.id}`);

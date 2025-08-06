@@ -32,6 +32,152 @@ const gameData = {
             ]
         }
     },
+
+'evacuacion-parcial': {
+    name: 'Evacuación Parcial',
+    description: 'Preguntas sobre los protocolos de actuación en un incidente de evacuación parcial, con enfoque en los roles y sus acciones.',
+    roles: {
+        'Operador_1': [
+            {
+                id: 'op1-q1',
+                question: "¿Cuál es el primer paso del Operador 1 al iniciar el protocolo de evacuación parcial?",
+                options: [
+                    "Llamar a emergencias",
+                    "Recabar información del evento",
+                    "Validar si el área evacuada incluye el CCM",
+                    "Escalar a LP",
+                    "Asumir el rol de vocero",
+                    "Comunicarse con los guardias"
+                ],
+                answer: "Validar si el área evacuada incluye el CCM"
+            },
+            {
+                id: 'op1-q2',
+                question: "Si el CCM NO evacua, ¿cuál es el siguiente paso para el Operador 1 después de recabar la información?",
+                options: [
+                    "Mantener el rol de vocero",
+                    "Comunicarse con los guardias",
+                    "Llamar a emergencias",
+                    "Monitorear cámaras",
+                    "Colocar el seguro",
+                    "Describir la zona visualizada en voz alta"
+                ],
+                answer: "Llamar a emergencias"
+            },
+            {
+                id: 'op1-q3',
+                question: "¿Cuál es la responsabilidad principal del Operador 1 una vez que el protocolo está en marcha?",
+                options: [
+                    "Seguimiento de cámaras",
+                    "Comunicación verbal constante en voz alta",
+                    "Validar si el CCM es evacuado",
+                    "Informar novedades a los operadores 3 y 4",
+                    "Mantener el rol de vocero",
+                    "Escribir un informe detallado del incidente"
+                ],
+                answer: "Mantener el rol de vocero"
+            }
+        ],
+        'Operador_2': [
+            {
+                id: 'op2-q1',
+                question: "Si el CCM NO evacua, ¿cuál es la primera acción del Operador 2?",
+                options: [
+                    "Recabar información del evento",
+                    "Monitorear cámaras",
+                    "Colocar seguro",
+                    "Llamar a emergencias",
+                    "Validar área evacuada",
+                    "Informar novedades al vocero"
+                ],
+                answer: "Colocar seguro"
+            },
+            {
+                id: 'op2-q2',
+                question: "¿Qué rol asume el Operador 2 una vez que el seguro está colocado?",
+                options: [
+                    "Comunicación con guardias",
+                    "Despacho de emergencias",
+                    "Seguimiento de cámaras",
+                    "Validación del área evacuada",
+                    "Informe de novedades al vocero",
+                    "Colocación del seguro"
+                ],
+                answer: "Monitorear cámaras"
+            },
+            {
+                id: 'op2-q3',
+                question: "¿A quién debe informar el Operador 2 sobre las novedades del incidente?",
+                options: [
+                    "Al Operador 3",
+                    "A los guardias",
+                    "Al vocero (Operador 1)",
+                    "A su supervisor",
+                    "Al equipo de emergencias",
+                    "A la policía"
+                ],
+                answer: "Al vocero (Operador 1)"
+            }
+        ],
+        'Operador_3': [
+            {
+                id: 'op3-q1',
+                question: "Si el CCM NO es evacuado, ¿cuál es la principal responsabilidad del Operador 3?",
+                options: [
+                    "Llamar a emergencias",
+                    "Monitorear cámaras",
+                    "Recabar información del evento",
+                    "Comunicación verbal en voz alta",
+                    "Validar si el CCM es evacuado",
+                    "Seguimiento de cámaras (monitoreo interno/externo)"
+                ],
+                answer: "Seguimiento de cámaras (monitoreo interno/externo)"
+            },
+            {
+                id: 'op3-q2',
+                question: "¿Cuál es el requisito de comunicación específico para el Operador 3?",
+                options: [
+                    "Comunicación verbal constante en voz alta",
+                    "Enviar un correo con las novedades",
+                    "Comunicación a través de chat",
+                    "Informar únicamente al vocero",
+                    "Solo comunicarse si hay un incidente grave",
+                    "No comunicarse para evitar pánico"
+                ],
+                answer: "Comunicación verbal constante en voz alta"
+            }
+        ],
+        'Operador_4': [
+            {
+                id: 'op4-q1',
+                question: "Al igual que el Operador 3, si el CCM NO es evacuado, ¿cuál es la principal responsabilidad del Operador 4?",
+                options: [
+                    "Comunicación con guardias",
+                    "Comunicación clara y continua",
+                    "Seguimiento con cámaras",
+                    "Validar si el CCM es evacuado",
+                    "Informar novedades al vocero",
+                    "Escalamiento a LP"
+                ],
+                answer: "Seguimiento con cámaras"
+            },
+            {
+                id: 'op4-q2',
+                question: "¿Qué tipo de comunicación debe mantener el Operador 4?",
+                options: [
+                    "Comunicación únicamente a través de radio",
+                    "Comunicación intermitente para no saturar los canales",
+                    "Comunicación clara y continua sobre la zona visualizada",
+                    "Comunicación solo con los guardias",
+                    "Comunicación únicamente a través de chat",
+                    "Comunicación en voz alta y constante"
+                ],
+                answer: "Comunicación clara y continua sobre la zona visualizada"
+            }
+        ]
+    }
+}
+
 };
 
 module.exports = gameData;

@@ -181,6 +181,11 @@
         socket.on('waitingForGameToStart', () => {
             lobbyMessage.textContent = 'Esperando que el administrador inicie el simulacro...';
         });
+        
+        socket.on('finalResults', ({ finalScores }) => {
+            // Lógica para mostrar resultados en el jugador, si es necesario
+            // O simplemente se muestra la pantalla de 'game-finished'
+        });
 
         socket.on('error', (message) => {
             playerMessages.textContent = `Error del servidor: ${message}`;

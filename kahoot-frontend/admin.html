@@ -3,213 +3,223 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Panel de Administrador de Simulacros</title>
+    <title>Simulacros - Jugador</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
     <div class="container">
-        <h1>Panel de Administrador de Simulacros</h1>
+        <h1>Simulacros - Jugador</h1>
 
-        <div id="connection-form">
-            <input type="text" id="adminNameInput" placeholder="Tu Nombre de Admin" required />
-            <button id="connectAdminBtn">Conectar como Admin</button>
+        <div id="join-form">
+            <input type="text" id="playerNameInput" placeholder="Tu Nombre" required />
+            <select id="playerRoleSelect">
+                <option value="">Selecciona tu rol</option>
+                <option value="diseñador">Diseñador</option>
+                <option value="comunicador">Comunicador</option>
+            </select>
+            <button id="joinGameBtn">Unirse al Juego</button>
+            <div id="playerMessages" style="color: red; margin-top: 10px;"></div>
         </div>
 
-        <div id="adminControls" style="display: none;">
-            <p>Admin Conectado: <strong id="adminNameDisplay"></strong></p>
-
-            <div id="scenarioSelection" style="margin-bottom: 15px;">
-                <label for="scenarioSelect">Selecciona un Escenario:</label>
-                <select id="scenarioSelect">
-                    <option value="">Cargando escenarios...</option>
-                </select>
-                <button id="selectScenarioBtn" style="margin-left: 10px;">Confirmar Escenario</button>
-                <p>Escenario Activo: <strong id="activeScenarioDisplay">Ninguno</strong></p>
-            </div>
-
-            <button id="startGameBtn" disabled>Iniciar Juego</button>
-            <button id="endGameBtn">Finalizar Simulacro</button>
-            <button id="downloadResultsBtn" style="margin-left: 10px; display: none;">Descargar Resultados CSV</button>
-
-            <h2>Jugadores Conectados:</h2>
-            <ul id="playerList"></ul>
+        <div id="game-lobby" style="display: none;">
+            <p>
+                ¡Bienvenido, <strong id="playerNameDisplay"></strong> (
+                <strong id="playerRoleDisplay"></strong>)!
+            </p>
+            <p id="lobbyMessage">Esperando que el administrador inicie el juego...</p>
         </div>
 
-        <div id="adminMessages"></div>
+        <div id="scenario-details" style="display: none;">
+            <h2>Detalles del Escenario: <span id="scenarioDetailsTitle"></span></h2>
+            <p id="scenarioDetailsDescription"></p>
+            <button id="startQuestionsBtn">Empezar Preguntas</button>
+        </div>
 
-        <div id="finalResultsDisplay" style="display: none; margin-top: 20px;">
-            <h2>Resultados Finales del Simulacro</h2>
-            <table id="resultsTable">
-                <thead>
-                    <tr><th>Nombre</th><th>Rol</th><th>Puntuación</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+        <div id="quiz-container" style="display: none;">
+            <h2 id="question"></h2>
+            <div id="options-container" class="options-grid"></div>
+            <p>Puntuación: <span id="playerScore">0</span></p>
+            <div id="result"></div>
+        </div>
+
+        <div id="game-finished" style="display: none;">
+            <h2>¡Simulacro Terminado! 🎉</h2>
+            <p>Tu puntuación final es: <strong id="finalPlayerScore"></strong></p>
+            <p>¡Gracias por participar!</p>
+            <button onclick="window.location.reload()">Jugar de Nuevo</button>
         </div>
     </div>
+
+    <audio id="gameStartSound">
+        <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg" />
+    </audio>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         const backendRenderUrl = 'https://simulador-0si7.onrender.com';
         const socket = io(backendRenderUrl);
 
-        const adminNameInput = document.getElementById('adminNameInput');
-        const connectAdminBtn = document.getElementById('connectAdminBtn');
-        const connectionForm = document.getElementById('connection-form');
-        const adminControls = document.getElementById('adminControls');
-        const adminNameDisplay = document.getElementById('adminNameDisplay');
-        const startGameBtn = document.getElementById('startGameBtn');
-        const playerList = document.getElementById('playerList');
-        const adminMessages = document.getElementById('adminMessages');
-        const downloadResultsBtn = document.getElementById('downloadResultsBtn');
-        const scenarioSelect = document.getElementById('scenarioSelect');
-        const selectScenarioBtn = document.getElementById('selectScenarioBtn');
-        const activeScenarioDisplay = document.getElementById('activeScenarioDisplay');
-        const finalResultsDisplay = document.getElementById('finalResultsDisplay');
-        const resultsTableBody = document.querySelector('#resultsTable tbody');
+        const playerNameInput = document.getElementById('playerNameInput');
+        const playerRoleSelect = document.getElementById('playerRoleSelect');
+        const joinGameBtn = document.getElementById('joinGameBtn');
+        const playerMessages = document.getElementById('playerMessages');
 
-        // Asumiendo que 'socket' ya está definido
-const endGameBtn = document.getElementById('endGameBtn');
+        const joinForm = document.getElementById('join-form');
+        const gameLobby = document.getElementById('game-lobby');
+        const scenarioDetails = document.getElementById('scenario-details');
+        const scenarioDetailsTitle = document.getElementById('scenarioDetailsTitle');
+        const scenarioDetailsDescription = document.getElementById('scenarioDetailsDescription');
+        const startQuestionsBtn = document.getElementById('startQuestionsBtn');
+        const quizContainer = document.getElementById('quiz-container');
+        const questionElement = document.getElementById('question');
+        const optionsContainer = document.getElementById('options-container');
+        const playerScoreElement = document.getElementById('playerScore');
+        const resultElement = document.getElementById('result');
+        const gameFinished = document.getElementById('game-finished');
+        const finalPlayerScoreElement = document.getElementById('finalPlayerScore');
+        const playerNameDisplay = document.getElementById('playerNameDisplay');
+        const playerRoleDisplay = document.getElementById('playerRoleDisplay');
+        const lobbyMessage = document.getElementById('lobbyMessage');
+        const gameStartAudio = document.getElementById('gameStartSound');
 
-endGameBtn.addEventListener('click', () => {
-    socket.emit('endGameEarly');
-    console.log('Solicitud para finalizar el juego enviada.');
-});
-        connectAdminBtn.addEventListener('click', () => {
-            const name = adminNameInput.value.trim();
-            if (name) {
-                socket.emit('joinGame', { name, isAdmin: true });
-                adminNameInput.disabled = true;
-                connectAdminBtn.disabled = true;
+        let currentQuestionId = null;
+
+        joinGameBtn.addEventListener('click', () => {
+            const name = playerNameInput.value.trim();
+            const role = playerRoleSelect.value;
+            if (name && role) {
+                socket.emit('joinGame', { name, role, isAdmin: false });
+                playerNameDisplay.textContent = name;
+                playerRoleDisplay.textContent = role;
+                joinForm.style.display = 'none';
+                gameLobby.style.display = 'block';
+                playerMessages.textContent = '';
             } else {
-                alert('Por favor, ingresa tu nombre de administrador.');
+                playerMessages.textContent = 'Por favor, ingresa tu nombre y selecciona un rol.';
             }
         });
 
-        selectScenarioBtn.addEventListener('click', () => {
-            const selectedScenario = scenarioSelect.value;
-            if (selectedScenario) {
-                socket.emit('selectScenario', selectedScenario);
-                selectScenarioBtn.disabled = true;
-                scenarioSelect.disabled = true;
+        startQuestionsBtn.addEventListener('click', () => {
+            scenarioDetails.style.display = 'none';
+            quizContainer.style.display = 'block';
+            socket.emit('playerReadyForQuestions');
+        });
+
+        socket.on('gameStarted', (data) => {
+            gameLobby.style.display = 'none';
+            quizContainer.style.display = 'none';
+            resultElement.textContent = '';
+            playerScoreElement.textContent = '0';
+
+            if (data && data.scenarioName && data.scenarioDescription) {
+                scenarioDetailsTitle.textContent = data.scenarioName;
+                scenarioDetailsDescription.textContent = data.scenarioDescription;
+                scenarioDetails.style.display = 'block';
+                gameStartAudio.play().catch(console.error);
             } else {
-                alert('Por favor, selecciona un escenario.');
+                scenarioDetails.style.display = 'none';
+                quizContainer.style.display = 'block';
+                resultElement.textContent = '¡El simulacro ha comenzado!';
+                gameStartAudio.play().catch(console.error);
             }
         });
 
-        startGameBtn.addEventListener('click', () => {
-            socket.emit('startGame');
-        });
+        socket.on('newQuestion', (question) => {
+            quizContainer.style.display = 'block';
+            scenarioDetails.style.display = 'none';
 
-        downloadResultsBtn.addEventListener('click', () => {
-            window.open(`${backendRenderUrl}/download-results`, '_blank');
-        });
+            currentQuestionId = question.id;
+            questionElement.textContent = question.question;
+            optionsContainer.innerHTML = '';
+            resultElement.textContent = '';
 
-        // Aquí está el cambio importante:
-        socket.on('adminConnected', ({ scenarios }) => {
-            connectionForm.style.display = 'none';
-            adminControls.style.display = 'block';
-            adminNameDisplay.textContent = adminNameInput.value;
-            adminMessages.textContent = '¡Bienvenido, administrador! Conectado al juego. Selecciona un escenario.';
-
-            scenarioSelect.innerHTML = '<option value="">--Selecciona--</option>';
-            scenarios.forEach(({ id, name }) => {
-                const option = document.createElement('option');
-                option.value = id;
-                option.textContent = name;
-                scenarioSelect.appendChild(option);
+            question.options.forEach((optionText) => {
+                const button = document.createElement('button');
+                button.textContent = optionText;
+                button.classList.add('option-button');
+                button.addEventListener('click', () => submitAnswer(optionText));
+                optionsContainer.appendChild(button);
             });
         });
 
-        socket.on('scenarioSelected', (scenarioName) => {
-            activeScenarioDisplay.textContent = scenarioName;
-            adminMessages.textContent = `Escenario "${scenarioName}" seleccionado. Ya puedes iniciar el juego cuando haya jugadores.`;
-            startGameBtn.disabled = false;
-        });
-
-        socket.on('currentPlayers', (playersArray) => {
-            playerList.innerHTML = '';
-            playersArray.forEach(player => {
-                const listItem = document.createElement('li');
-                listItem.id = `player-${player.id}`;
-                listItem.textContent = `${player.name} (${player.role})`;
-                playerList.appendChild(listItem);
+        function submitAnswer(selectedOptionText) {
+            optionsContainer.querySelectorAll('.option-button').forEach((btn) => {
+                btn.disabled = true;
             });
-        });
+            socket.emit('submitAnswer', { selectedOption: selectedOptionText });
+        }
 
-        socket.on('playerJoined', (player) => {
-            const playerId = `player-${player.id}`;
-            if (!document.getElementById(playerId)) {
-                const listItem = document.createElement('li');
-                listItem.id = playerId;
-                listItem.textContent = `${player.name} (${player.role})`;
-                playerList.appendChild(listItem);
-                adminMessages.textContent = `${player.name} se ha unido al juego.`;
-            }
-        });
+        socket.on('answerResult', ({ correct, score, correctOption }) => {
+            playerScoreElement.textContent = score;
 
-        socket.on('playerLeft', (player) => {
-            const listItem = document.getElementById(`player-${player.id}`);
-            if (listItem) listItem.remove();
-            adminMessages.textContent = `${player.name} ha dejado el juego.`;
-        });
+            resultElement.textContent = correct
+                ? '¡Correcto! 🎉'
+                : `Incorrecto. La respuesta correcta era: ${correctOption} 😢`;
+            resultElement.style.color = correct ? '#4CAF50' : '#F44336';
 
-        socket.on('gameStartedAdmin', () => {
-            adminMessages.textContent = '¡Juego Iniciado! Los jugadores ya están recibiendo sus preguntas y avanzarán por su cuenta.';
-            startGameBtn.style.display = 'none';
-            downloadResultsBtn.style.display = 'none';
-            finalResultsDisplay.style.display = 'none';
-        });
-
-        socket.on('finalResults', (finalScores) => {
-            adminMessages.textContent = '¡Juego Finalizado! Resultados disponibles.';
-            downloadResultsBtn.style.display = 'block';
-            finalResultsDisplay.style.display = 'block';
-            resultsTableBody.innerHTML = '';
-
-            finalScores.forEach(player => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${player.name}</td>
-                    <td>${player.role}</td>
-                    <td>${player.score}</td>
-                `;
-                resultsTableBody.appendChild(row);
+            optionsContainer.querySelectorAll('.option-button').forEach((btn) => {
+                if (btn.textContent === correctOption) {
+                    btn.classList.add('correct');
+                }
             });
+
+            setTimeout(() => {
+                resultElement.textContent = '';
+                socket.emit('playerReadyForQuestions');
+            }, 2000);
+        });
+
+        socket.on('gameFinishedForPlayer', ({ finalScore }) => {
+            quizContainer.style.display = 'none';
+            gameLobby.style.display = 'none';
+            joinForm.style.display = 'none';
+            scenarioDetails.style.display = 'none';
+            gameFinished.style.display = 'block';
+            finalPlayerScoreElement.textContent = finalScore;
+        });
+
+        socket.on('waitingForGameToStart', () => {
+            lobbyMessage.textContent = 'Esperando que el administrador inicie el simulacro...';
+        });
+        
+        socket.on('finalResults', ({ finalScores }) => {
+            // Lógica para mostrar resultados en el jugador, si es necesario
+            // O simplemente se muestra la pantalla de 'game-finished'
         });
 
         socket.on('error', (message) => {
-            adminMessages.textContent = `Error del servidor: ${message}`;
-            alert(`Error: ${message}`);
-
-            if (message.includes('administrador conectado')) {
-                adminNameInput.disabled = false;
-                connectAdminBtn.disabled = false;
+            playerMessages.textContent = `Error del servidor: ${message}`;
+            if (message.includes('Ya estás conectado')) {
+                joinForm.style.display = 'none';
+                gameLobby.style.display = 'block';
+                lobbyMessage.textContent = 'Ya estás conectado al juego. Esperando que el administrador inicie/continúe.';
+            } else if (message.includes('inscripciones están cerradas')) {
+                playerMessages.textContent = message;
+                joinGameBtn.disabled = true;
+                playerNameInput.disabled = true;
+                playerRoleSelect.disabled = true;
             }
+        });
 
-            if (message.includes('Escenario no válido.') || message.includes('selecciona un escenario')) {
-                selectScenarioBtn.disabled = false;
-                scenarioSelect.disabled = false;
-            }
+        socket.on('adminDisconnectedNotification', (message) => {
+            playerMessages.textContent = message;
+            setTimeout(() => window.location.reload(), 3000);
         });
 
         socket.on('disconnect', () => {
-            adminMessages.textContent = 'Desconectado del servidor.';
-            connectionForm.style.display = 'block';
-            adminControls.style.display = 'none';
-            adminNameInput.disabled = false;
-            connectAdminBtn.disabled = false;
-            startGameBtn.disabled = true;
-            selectScenarioBtn.disabled = false;
-            scenarioSelect.disabled = false;
-            playerList.innerHTML = '';
-            downloadResultsBtn.style.display = 'none';
-            finalResultsDisplay.style.display = 'none';
-            activeScenarioDisplay.textContent = 'Ninguno';
+            playerMessages.textContent = 'Desconectado del servidor.';
+            joinForm.style.display = 'block';
+            gameLobby.style.display = 'none';
+            quizContainer.style.display = 'none';
+            scenarioDetails.style.display = 'none';
+            gameFinished.style.display = 'none';
+            playerNameInput.disabled = false;
+            playerRoleSelect.disabled = false;
+            joinGameBtn.disabled = false;
         });
 
-        socket.on('resetGameFrontend', () => {
-            console.log('Juego reseteado por el administrador. Reiniciando frontend.');
+        socket.on('reconnect', () => {
+            playerMessages.textContent = 'Reconectado al servidor.';
         });
     </script>
 </body>

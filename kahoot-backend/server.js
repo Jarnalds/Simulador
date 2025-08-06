@@ -31,7 +31,27 @@ app.get('/', (req, res) => {
     res.send('Servidor de Simulacros (Backend) funcionando.');
 });
 
-// ... (otros endpoints si los tienes)
+app.get('/download-results', (req, res) => {
+    if (!adminSocketId) {
+        return res.status(403).send('Acceso denegado. Solo el administrador puede descargar resultados.');
+    }
+
+    const finalScores = Object.values(players).map(p => ({
+        name: p.name,
+        role: p.role,
+        score: p.score,
+        answerHistory: p.answerHistory,
+    }));
+
+    if (finalScores.length === 0) {
+        return res.status(404).send('No hay resultados para descargar.');
+    }
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename="simulacros_resultados.json"');
+    
+    res.status(200).send(JSON.stringify(finalScores, null, 2));
+});
 
 io.on('connection', (socket) => {
     console.log(`Nuevo usuario conectado: ${socket.id}`);
@@ -69,6 +89,8 @@ io.on('connection', (socket) => {
                 role: role || 'Jugador',
                 score: 0,
                 currentQuestionIndex: 0,
+                questionStartTime: null,
+                answerHistory: [],
             };
             io.emit('playerJoined', { id: socket.id, name, role: players[socket.id].role });
             if (adminSocketId) {
@@ -77,7 +99,6 @@ io.on('connection', (socket) => {
             if (gameStarted && currentScenarioId) {
                 const scenarioInfo = gameData[currentScenarioId];
                 if (scenarioInfo) {
-                    // Enviar solo preguntas del rol para este jugador
                     const questionsForRole = scenarioInfo.roles[players[socket.id].role] || [];
                     io.to(socket.id).emit('gameStarted', {
                         scenarioName: scenarioInfo.name,
@@ -124,13 +145,14 @@ io.on('connection', (socket) => {
         Object.values(players).forEach(player => {
             player.score = 0;
             player.currentQuestionIndex = 0;
+            player.answerHistory = [];
         });
         const scenarioInfo = gameData[currentScenarioId];
         io.emit('gameStartedAdmin');
         io.emit('gameStarted', {
             scenarioName: scenarioInfo.name,
             scenarioDescription: scenarioInfo.description,
-            questions: [], // no envíes todas, enviarás pregunta por pregunta
+            questions: [],
         });
         io.emit('playGameStartSound');
         console.log('Juego iniciado');
@@ -144,6 +166,7 @@ io.on('connection', (socket) => {
         const questionsForRole = scenario.roles[player.role] || [];
         const currentQuestion = questionsForRole[player.currentQuestionIndex];
         if (currentQuestion) {
+            player.questionStartTime = Date.now();
             io.to(socket.id).emit('newQuestion', {
                 id: currentQuestion.id,
                 question: currentQuestion.question,
@@ -159,7 +182,6 @@ io.on('connection', (socket) => {
         if (!player) return;
 
         if (!gameStarted || !currentScenarioId) {
-            console.log('Respuesta recibida:', selectedOption);
             io.to(socket.id).emit('error', 'El juego no está activo.');
             return;
         }
@@ -175,16 +197,27 @@ io.on('connection', (socket) => {
             io.to(socket.id).emit('error', 'No hay pregunta actual.');
             return;
         }
+        
+        const timeTaken = player.questionStartTime ? (Date.now() - player.questionStartTime) / 1000 : 0;
+        player.questionStartTime = null;
 
         console.log(`Jugador: ${player.name}`);
         console.log(`Respuesta recibida: "${selectedOption}"`);
         console.log(`Respuesta correcta: "${currentQuestion.answer}"`);
+        console.log(`Tiempo de respuesta: ${timeTaken.toFixed(2)}s`);
 
         const isCorrect = selectedOption === currentQuestion.answer;
 
         if (isCorrect) {
             player.score += 1;
         }
+
+        player.answerHistory.push({
+            questionId: currentQuestion.id,
+            selectedOption,
+            correct: isCorrect,
+            timeTaken: timeTaken.toFixed(2),
+        });
 
         player.currentQuestionIndex++;
 
@@ -194,7 +227,6 @@ io.on('connection', (socket) => {
             correctOption: currentQuestion.answer,
         });
 
-        // Enviar siguiente pregunta automáticamente
         const nextQuestion = questionsForRole[player.currentQuestionIndex];
         if (nextQuestion) {
             io.to(socket.id).emit('newQuestion', {
@@ -206,7 +238,6 @@ io.on('connection', (socket) => {
             io.to(socket.id).emit('gameFinishedForPlayer', { finalScore: player.score });
         }
 
-        // Si todos terminan, mandar resultados
         const allFinished = Object.values(players).every(p => {
             const qs = scenario.roles[p.role] || [];
             return p.currentQuestionIndex >= qs.length;
@@ -217,6 +248,7 @@ io.on('connection', (socket) => {
                 name: p.name,
                 role: p.role,
                 score: p.score,
+                answerHistory: p.answerHistory,
             }));
             io.emit('finalResults', finalScores);
             gameStarted = false;
@@ -226,32 +258,28 @@ io.on('connection', (socket) => {
         }
     });
 
-// Nuevo evento para que el administrador finalice el juego
-socket.on('endGameEarly', () => {
-    // Solo el administrador puede usar este comando
-    if (socket.id !== adminSocketId) {
-        socket.emit('error', 'Solo el administrador puede finalizar el juego.');
-        return;
-    }
+    socket.on('endGameEarly', () => {
+        if (socket.id !== adminSocketId) {
+            socket.emit('error', 'Solo el administrador puede finalizar el juego.');
+            return;
+        }
 
-    console.log('El administrador ha finalizado el juego antes de tiempo.');
-    // Recopila las puntuaciones finales de todos los jugadores
-    const finalScores = Object.values(players).map(p => ({
-        name: p.name,
-        role: p.role,
-        score: p.score,
-    }));
-    
-    // Emite los resultados a todos los jugadores
-    io.emit('finalResults', finalScores);
-    
-    // Resetea el estado del juego
-    gameStarted = false;
-    acceptNewPlayers = true;
-    currentScenarioId = null;
-    
-    io.emit('resetGameFrontend'); // Un evento para que los clientes se reinicien si es necesario
-});
+        console.log('El administrador ha finalizado el juego antes de tiempo.');
+        const finalScores = Object.values(players).map(p => ({
+            name: p.name,
+            role: p.role,
+            score: p.score,
+            answerHistory: p.answerHistory,
+        }));
+        
+        io.emit('finalResults', finalScores);
+        
+        gameStarted = false;
+        acceptNewPlayers = true;
+        currentScenarioId = null;
+        
+        io.emit('resetGameFrontend');
+    });
 
     socket.on('disconnect', () => {
         console.log(`Usuario desconectado: ${socket.id}`);
@@ -280,5 +308,3 @@ socket.on('endGameEarly', () => {
 server.listen(PORT, () => {
     console.log(`Servidor de Simulacros (Backend) escuchando en el puerto ${PORT}`);
 });
-
-// 

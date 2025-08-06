@@ -1,5 +1,4 @@
 const gameData = {
-    // Escenario 1: Emergencia Médica (renombrado para mayor coherencia)
     'emergencia-medica': {
         name: 'Código Azul',
         description: 'Emergencia Médica en cortina 1',
@@ -17,7 +16,6 @@ const gameData = {
         }
     },
 
-    // Escenario 2: Crisis de Ciberseguridad
     'crisis-ciberseguridad': {
         name: 'Crisis de Ciberseguridad',
         description: '¡Alerta! Un ataque de ciberseguridad ha ocurrido.',
@@ -34,7 +32,6 @@ const gameData = {
             ]
         }
     },
-    // Puedes añadir más escenarios aquí
 };
 
 module.exports = gameData;

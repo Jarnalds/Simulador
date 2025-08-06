@@ -226,7 +226,7 @@ io.on('connection', (socket) => {
         }
     });
 
-Nuevo evento para que el administrador finalice el juego
+// Nuevo evento para que el administrador finalice el juego
 socket.on('endGameEarly', () => {
     // Solo el administrador puede usar este comando
     if (socket.id !== adminSocketId) {

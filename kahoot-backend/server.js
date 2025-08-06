@@ -30,12 +30,14 @@ let currentScenarioId = null;
 app.get('/', (req, res) => {
     res.send('Servidor de Simulacros (Backend) funcionando.');
 });
-
+// Endpoint para descargar resultados
 app.get('/download-results', (req, res) => {
+    // Verifica que solo el administrador pueda realizar esta acción
     if (!adminSocketId) {
-        return res.status(403).send('Acceso denegado. Solo el administrador puede descargar resultados.');
+        return res.status(403).send('Acceso denegado.');
     }
 
+    // Recopila los resultados finales con el historial de cada jugador
     const finalScores = Object.values(players).map(p => ({
         name: p.name,
         role: p.role,
@@ -47,9 +49,11 @@ app.get('/download-results', (req, res) => {
         return res.status(404).send('No hay resultados para descargar.');
     }
     
+    // Configura los encabezados para forzar la descarga de un archivo
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', 'attachment; filename="simulacros_resultados.json"');
     
+    // Envía los datos como una cadena JSON
     res.status(200).send(JSON.stringify(finalScores, null, 2));
 });
 

@@ -101,9 +101,10 @@ endGameBtn.addEventListener('click', () => {
             socket.emit('startGame');
         });
 
-        downloadResultsBtn.addEventListener('click', () => {
-            window.open(`${backendRenderUrl}/download-results`, '_blank');
-        });
+downloadResultsBtn.addEventListener('click', () => {
+    // La URL debe coincidir con el endpoint de tu servidor
+    window.location.href = 'https://simulador-0si7.onrender.com/download-results';
+});
 
         // Aquí está el cambio importante:
         socket.on('adminConnected', ({ scenarios }) => {

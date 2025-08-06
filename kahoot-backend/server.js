@@ -2,12 +2,15 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
+const fs = require('fs'); // Nuevo: Módulo para el sistema de archivos
+const path = require('path'); // Nuevo: Módulo para manejar rutas de archivos
 
 const gameData = require('./scenarios.js');
 
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
+const RESULTS_FILE = path.join(__dirname, 'results.json'); // Nuevo: Define la ruta del archivo de resultados
 
 app.use(cors({
     origin: 'https://jarnalds.github.io',
@@ -27,33 +30,50 @@ let adminSocketId = null;
 let acceptNewPlayers = true;
 let currentScenarioId = null;
 
+// Nuevo: Función para guardar los resultados en un archivo
+const saveResultsToFile = (data) => {
+    try {
+        fs.writeFileSync(RESULTS_FILE, JSON.stringify(data, null, 2));
+        console.log('Resultados guardados en results.json');
+    } catch (error) {
+        console.error('Error al guardar los resultados:', error);
+    }
+};
+
+// Nuevo: Función para cargar los resultados al iniciar el servidor
+const loadResultsFromFile = () => {
+    if (fs.existsSync(RESULTS_FILE)) {
+        try {
+            const data = fs.readFileSync(RESULTS_FILE, 'utf8');
+            return JSON.parse(data);
+        } catch (error) {
+            console.error('Error al leer el archivo de resultados:', error);
+            return null;
+        }
+    }
+    return null;
+};
+
 app.get('/', (req, res) => {
     res.send('Servidor de Simulacros (Backend) funcionando.');
 });
+
 // Endpoint para descargar resultados
 app.get('/download-results', (req, res) => {
-    // Verifica que solo el administrador pueda realizar esta acción
     if (!adminSocketId) {
-        return res.status(403).send('Acceso denegado.');
+        return res.status(403).send('Acceso denegado. Solo el administrador puede descargar resultados.');
     }
 
-    // Recopila los resultados finales con el historial de cada jugador
-    const finalScores = Object.values(players).map(p => ({
-        name: p.name,
-        role: p.role,
-        score: p.score,
-        answerHistory: p.answerHistory,
-    }));
+    // Nuevo: Lee los resultados directamente del archivo
+    const finalScores = loadResultsFromFile();
 
-    if (finalScores.length === 0) {
+    if (!finalScores || finalScores.length === 0) {
         return res.status(404).send('No hay resultados para descargar.');
     }
     
-    // Configura los encabezados para forzar la descarga de un archivo
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', 'attachment; filename="simulacros_resultados.json"');
     
-    // Envía los datos como una cadena JSON
     res.status(200).send(JSON.stringify(finalScores, null, 2));
 });
 
@@ -255,6 +275,8 @@ io.on('connection', (socket) => {
                 answerHistory: p.answerHistory,
             }));
             io.emit('finalResults', finalScores);
+            // Nuevo: Guarda los resultados al finalizar el juego
+            saveResultsToFile(finalScores);
             gameStarted = false;
             acceptNewPlayers = true;
             currentScenarioId = null;
@@ -277,6 +299,8 @@ io.on('connection', (socket) => {
         }));
         
         io.emit('finalResults', finalScores);
+        // Nuevo: Guarda los resultados al finalizar el juego
+        saveResultsToFile(finalScores);
         
         gameStarted = false;
         acceptNewPlayers = true;

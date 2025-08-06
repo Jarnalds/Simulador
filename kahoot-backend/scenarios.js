@@ -287,7 +287,7 @@ const gameData = {
             }
         ]
     }
-}
+},
 
 'lockdown-completo': {
     name: 'Lockdown Completo',
@@ -480,7 +480,7 @@ const gameData = {
             }
         ]
     }
-}
+},
 
 'lockdown-parcial': {
     name: 'Lockdown Parcial',
@@ -735,7 +735,7 @@ const gameData = {
             }
         ]
     }
-}
+},
 
 'evacuacion-total': {
     name: 'Evacuación Total',

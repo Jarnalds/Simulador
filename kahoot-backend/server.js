@@ -226,6 +226,33 @@ io.on('connection', (socket) => {
         }
     });
 
+Nuevo evento para que el administrador finalice el juego
+socket.on('endGameEarly', () => {
+    // Solo el administrador puede usar este comando
+    if (socket.id !== adminSocketId) {
+        socket.emit('error', 'Solo el administrador puede finalizar el juego.');
+        return;
+    }
+
+    console.log('El administrador ha finalizado el juego antes de tiempo.');
+    // Recopila las puntuaciones finales de todos los jugadores
+    const finalScores = Object.values(players).map(p => ({
+        name: p.name,
+        role: p.role,
+        score: p.score,
+    }));
+    
+    // Emite los resultados a todos los jugadores
+    io.emit('finalResults', finalScores);
+    
+    // Resetea el estado del juego
+    gameStarted = false;
+    acceptNewPlayers = true;
+    currentScenarioId = null;
+    
+    io.emit('resetGameFrontend'); // Un evento para que los clientes se reinicien si es necesario
+});
+
     socket.on('disconnect', () => {
         console.log(`Usuario desconectado: ${socket.id}`);
 
@@ -254,29 +281,4 @@ server.listen(PORT, () => {
     console.log(`Servidor de Simulacros (Backend) escuchando en el puerto ${PORT}`);
 });
 
-// Nuevo evento para que el administrador finalice el juego
-socket.on('endGameEarly', () => {
-    // Solo el administrador puede usar este comando
-    if (socket.id !== adminSocketId) {
-        socket.emit('error', 'Solo el administrador puede finalizar el juego.');
-        return;
-    }
-
-    console.log('El administrador ha finalizado el juego antes de tiempo.');
-    // Recopila las puntuaciones finales de todos los jugadores
-    const finalScores = Object.values(players).map(p => ({
-        name: p.name,
-        role: p.role,
-        score: p.score,
-    }));
-    
-    // Emite los resultados a todos los jugadores
-    io.emit('finalResults', finalScores);
-    
-    // Resetea el estado del juego
-    gameStarted = false;
-    acceptNewPlayers = true;
-    currentScenarioId = null;
-    
-    io.emit('resetGameFrontend'); // Un evento para que los clientes se reinicien si es necesario
-});
+// 

@@ -2,15 +2,15 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
-const fs = require('fs'); // Nuevo: Módulo para el sistema de archivos
-const path = require('path'); // Nuevo: Módulo para manejar rutas de archivos
+const fs = require('fs');
+const path = require('path');
 
 const gameData = require('./scenarios.js');
 
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
-const RESULTS_FILE = path.join(__dirname, 'results.json'); // Nuevo: Define la ruta del archivo de resultados
+const RESULTS_FILE = path.join(__dirname, 'results.json');
 
 app.use(cors({
     origin: 'https://jarnalds.github.io',
@@ -30,7 +30,6 @@ let adminSocketId = null;
 let acceptNewPlayers = true;
 let currentScenarioId = null;
 
-// Nuevo: Función para guardar los resultados en un archivo
 const saveResultsToFile = (data) => {
     try {
         fs.writeFileSync(RESULTS_FILE, JSON.stringify(data, null, 2));
@@ -40,7 +39,6 @@ const saveResultsToFile = (data) => {
     }
 };
 
-// Nuevo: Función para cargar los resultados al iniciar el servidor
 const loadResultsFromFile = () => {
     if (fs.existsSync(RESULTS_FILE)) {
         try {
@@ -54,6 +52,54 @@ const loadResultsFromFile = () => {
     return null;
 };
 
+// Nuevo: Función para convertir los datos a formato CSV
+const convertToCsv = (data) => {
+    if (!data || data.length === 0) {
+        return '';
+    }
+
+    const headers = [
+        'Nombre del Jugador',
+        'Rol',
+        'Puntuación Final',
+        'ID de Pregunta',
+        'Opción Seleccionada',
+        'Es Correcta',
+        'Tiempo de Respuesta (s)'
+    ];
+    
+    let csvString = headers.join(',') + '\n';
+    
+    data.forEach(player => {
+        if (player.answerHistory && player.answerHistory.length > 0) {
+            player.answerHistory.forEach(answer => {
+                const row = [
+                    `"${player.name.replace(/"/g, '""')}"`, // Escapa comillas dobles en el nombre
+                    `"${player.role.replace(/"/g, '""')}"`,
+                    player.score,
+                    `"${answer.questionId}"`,
+                    `"${answer.selectedOption.replace(/"/g, '""')}"`,
+                    answer.correct ? 'Sí' : 'No',
+                    answer.timeTaken
+                ];
+                csvString += row.join(',') + '\n';
+            });
+        } else {
+            // Si el jugador no respondió nada, crea una fila con sus datos
+            const row = [
+                `"${player.name.replace(/"/g, '""')}"`,
+                `"${player.role.replace(/"/g, '""')}"`,
+                player.score,
+                '', '', '', ''
+            ];
+            csvString += row.join(',') + '\n';
+        }
+    });
+    
+    return csvString;
+};
+
+
 app.get('/', (req, res) => {
     res.send('Servidor de Simulacros (Backend) funcionando.');
 });
@@ -64,17 +110,21 @@ app.get('/download-results', (req, res) => {
         return res.status(403).send('Acceso denegado. Solo el administrador puede descargar resultados.');
     }
 
-    // Nuevo: Lee los resultados directamente del archivo
+    // Lee los resultados del archivo JSON
     const finalScores = loadResultsFromFile();
 
     if (!finalScores || finalScores.length === 0) {
         return res.status(404).send('No hay resultados para descargar.');
     }
+
+    // Nuevo: Convierte los datos a CSV
+    const csvData = convertToCsv(finalScores);
     
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', 'attachment; filename="simulacros_resultados.json"');
+    // Nuevo: Cambia el tipo de contenido y el nombre del archivo
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="simulacros_resultados.csv"');
     
-    res.status(200).send(JSON.stringify(finalScores, null, 2));
+    res.status(200).send(csvData);
 });
 
 io.on('connection', (socket) => {
@@ -275,7 +325,6 @@ io.on('connection', (socket) => {
                 answerHistory: p.answerHistory,
             }));
             io.emit('finalResults', finalScores);
-            // Nuevo: Guarda los resultados al finalizar el juego
             saveResultsToFile(finalScores);
             gameStarted = false;
             acceptNewPlayers = true;
@@ -299,7 +348,6 @@ io.on('connection', (socket) => {
         }));
         
         io.emit('finalResults', finalScores);
-        // Nuevo: Guarda los resultados al finalizar el juego
         saveResultsToFile(finalScores);
         
         gameStarted = false;

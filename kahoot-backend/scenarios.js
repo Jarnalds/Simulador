@@ -38,7 +38,7 @@ const gameData = {
     name: 'Evacuación Parcial - Roles y Acciones',
     description: 'Protocolo de actuación para cada operador en un incidente de evacuación parcial. Las preguntas siguen el orden de las acciones.',
     roles: {
-        'Operador 1 (Vocero principal)': [
+        "Operador_1": [
             {
                 id: 'op1-q1',
                 question: "¿Cuál es la primera acción del Operador 1?",
@@ -100,7 +100,13 @@ const gameData = {
                 answer: "Mantener el rol de vocero"
             }
         ],
-        'Operador 2': [
+        get "Operador_1"() {
+            return this["Operador_1"];
+        },
+        set "Operador_1"(value) {
+            this["Operador_1"] = value;
+        },
+        "Operador_2": [
             {
                 id: 'op2-q1',
                 question: "¿Qué debe validar primero el Operador 2 al iniciar el protocolo?",
@@ -162,7 +168,13 @@ const gameData = {
                 answer: "El playbook de evacuación total"
             }
         ],
-        'Operador 3': [
+        get "Operador_2"() {
+            return this["Operador_2"];
+        },
+        set "Operador_2"(value) {
+            this["Operador_2"] = value;
+        },
+        'Operador_3': [
             {
                 id: 'op3-q1',
                 question: "¿Cuál es la primera acción del Operador 3 al activarse el protocolo?",
@@ -224,7 +236,7 @@ const gameData = {
                 answer: "Principalmente monitorista"
             }
         ],
-        'Operador 4': [
+        'Operador_4': [
             {
                 id: 'op4-q1',
                 question: "¿Cuál es el paso inicial para el Operador 4?",
@@ -293,7 +305,7 @@ const gameData = {
     name: 'Lockdown Completo',
     description: 'Preguntas sobre el protocolo de actuación de cada operador en un incidente de lockdown completo, enfocadas en las acciones y su orden.',
     roles: {
-        'Operador 1': [
+        'Operador_1': [
             {
                 id: 'op1-q1',
                 question: "¿Cuál es la primera acción del Operador 1 al inicio del protocolo de Lockdown?",
@@ -355,7 +367,7 @@ const gameData = {
                 answer: "Vocero principal, compartiendo actualizaciones a personal interno MELI"
             }
         ],
-        'Operador 2': [
+        'Operador_2': [
             {
                 id: 'op2-q1',
                 question: "¿Cuál es la primera acción del Operador 2 en un Lockdown Completo?",
@@ -417,7 +429,7 @@ const gameData = {
                 answer: "Gestionar la seguridad física y el monitoreo"
             }
         ],
-        'Operador 3': [
+        'Operador_3': [
             {
                 id: 'op3-q1',
                 question: "¿Cuál es la responsabilidad principal del Operador 3 en el monitoreo?",
@@ -486,7 +498,7 @@ const gameData = {
     name: 'Lockdown Parcial',
     description: 'Preguntas sobre los roles y acciones en un protocolo de lockdown parcial, enfocadas en la secuencia de eventos y las responsabilidades.',
     roles: {
-        'Operador 1 (Vocero principal)': [
+        'Operador_1': [
             {
                 id: 'op1-lp-q1',
                 question: "¿Cuál es la primera acción del Operador 1 en un Lockdown Parcial?",
@@ -548,7 +560,7 @@ const gameData = {
                 answer: "Mantenerse como vocero y actualizar al personal interno"
             }
         ],
-        'Operador 2': [
+        'Operador_2': [
             {
                 id: 'op2-lp-q1',
                 question: "¿Cuál es la primera acción del Operador 2 en un Lockdown Parcial?",
@@ -610,7 +622,7 @@ const gameData = {
                 answer: "Todas las acciones"
             }
         ],
-        'Operador 3': [
+        'Operador_3': [
             {
                 id: 'op3-lp-q1',
                 question: "¿Cuál es la primera responsabilidad del Operador 3?",
@@ -672,7 +684,7 @@ const gameData = {
                 answer: "Ser el apoyo de monitoreo y comunicación"
             }
         ],
-        'Operador 4': [
+        'Operador_4': [
             {
                 id: 'op4-lp-q1',
                 question: "¿Qué tipo de seguimiento realiza el Operador 4?",
@@ -741,7 +753,7 @@ const gameData = {
     name: 'Evacuación Total',
     description: 'Preguntas sobre el protocolo de actuación de cada operador en un incidente de evacuación total, enfocadas en las acciones y su orden de prioridad.',
     roles: {
-        'Operador 1': [
+        'Operador_1': [
             {
                 id: 'op1-et-q1',
                 question: "¿Cuál es la primera acción del Operador 1 en un protocolo de Evacuación Total?",
@@ -803,7 +815,7 @@ const gameData = {
                 answer: "La batería y el funcionamiento de los equipos"
             }
         ],
-        'Operador 2': [
+        'Operador_2': [
             {
                 id: 'op2-et-q1',
                 question: "¿Cuál es la primera acción del Operador 2 en una evacuación total?",
@@ -865,7 +877,7 @@ const gameData = {
                 answer: "El Operador 2 es un apoyo, mientras el vocero es el punto de contacto central"
             }
         ],
-        'Operador 3': [
+        'Operador_3': [
             {
                 id: 'op3-et-q1',
                 question: "¿Cuál es la primera acción del Operador 3?",

@@ -28,6 +28,7 @@
             </div>
 
             <button id="startGameBtn" disabled>Iniciar Juego</button>
+            <button id="endGameBtn">Finalizar Simulacro</button>
             <button id="downloadResultsBtn" style="margin-left: 10px; display: none;">Descargar Resultados CSV</button>
 
             <h2>Jugadores Conectados:</h2>
@@ -67,6 +68,13 @@
         const finalResultsDisplay = document.getElementById('finalResultsDisplay');
         const resultsTableBody = document.querySelector('#resultsTable tbody');
 
+        // Asumiendo que 'socket' ya está definido
+const endGameBtn = document.getElementById('endGameBtn');
+
+endGameBtn.addEventListener('click', () => {
+    socket.emit('endGameEarly');
+    console.log('Solicitud para finalizar el juego enviada.');
+});
         connectAdminBtn.addEventListener('click', () => {
             const name = adminNameInput.value.trim();
             if (name) {

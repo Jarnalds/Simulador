@@ -370,7 +370,7 @@ const gameData = {
     answer: "Sí, el guardia está listo para guiar a las personas a la salida de emergencia en caso de que sea necesario evacuar todo el almacén."
   }
 ]
-
+}
   }
 };
 

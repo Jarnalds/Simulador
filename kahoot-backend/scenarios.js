@@ -192,7 +192,6 @@ const gameData = {
     }
   },
 
-const gameData = {
   'lockdown-completo': {
     name: 'Lockdown Completo',
     description: 'Preguntas sobre el protocolo de actuación de cada operador en un incidente de lockdown completo, enfocadas en las acciones y su orden.',

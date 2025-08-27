@@ -549,9 +549,3 @@ const gameData = {
 
 module.exports = gameData;
 
-
-
-
-};
-
-module.exports = gameData;

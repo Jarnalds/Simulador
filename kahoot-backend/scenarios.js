@@ -1,39 +1,4 @@
 const gameData = {
-    'emergencia-medica': {
-        name: 'Código Azul',
-        description: 'Emergencia Médica en cortina 1',
-        roles: {
-            'diseñador': [
-                { id: 'cc-dis-1', question: "¿Cómo ayuda el UX a prevenir ataques de ingeniería social?", options: ["Diseñando interfaces complejas", "Creando alertas claras y comprensibles", "Limitando la funcionalidad"], answer: "Creando alertas claras y comprensibles" },
-                { id: 'cc-dis-2', question: "¿Qué aspecto del diseño es clave en un mensaje de alerta de seguridad?", options: ["Animaciones complejas", "Claridad y urgencia", "Uso de colores vibrantes"], answer: "Claridad y urgencia" },
-                { id: 'cc-dis-3', question: "¿Qué papel juega la 'confianza' en la experiencia de usuario durante una crisis?", options: ["Es irrelevante", "Es fundamental para mantener la credibilidad", "Solo afecta a los nuevos usuarios"], answer: "Es fundamental para mantener la credibilidad" }
-            ],
-            'comunicador': [
-                { id: 'cc-com-1', question: "¿Qué debe incluir un comunicado de prensa sobre una violación de datos?", options: ["Solo el nombre del CEO", "Transparencia, acciones tomadas y ayuda a afectados", "Justificaciones y evasivas"], answer: "Transparencia, acciones tomadas y ayuda a afectados" },
-                { id: 'cc-com-2', question: "¿Cuál es el propósito de un plan de comunicación de crisis?", options: ["Evitar que la noticia salga", "Preparar respuestas y controlar la narrativa", "Culpar a los responsables"], answer: "Preparar respuestas y controlar la narrativa" },
-                { id: 'cc-com-3', question: "¿Qué canal es vital para informar rápidamente a los afectados?", options: ["Vallas publicitarias", "Email y sitio web oficial", "Redes sociales personales"], answer: "Email y sitio web oficial" }
-            ]
-        }
-    },
-
-    'crisis-ciberseguridad': {
-        name: 'Crisis de Ciberseguridad',
-        description: '¡Alerta! Un ataque de ciberseguridad ha ocurrido.',
-        roles: {
-            'diseñador': [
-                { id: 'cc-dis-4', question: "¿Qué aspecto es esencial en el diseño para crisis?", options: ["Claridad visual", "Colores brillantes", "Animaciones largas"], answer: "Claridad visual" },
-                { id: 'cc-dis-5', question: "¿Cómo puede el diseño prevenir errores humanos?", options: ["Interfaces confusas", "Alertas claras y directas", "Reduciendo funciones"], answer: "Alertas claras y directas" },
-                { id: 'cc-dis-6', question: "¿Qué es la accesibilidad en diseño?", options: ["Hacer interfaces solo para expertos", "Hacer interfaces usables para todos", "Eliminar funcionalidades"], answer: "Hacer interfaces usables para todos" }
-            ],
-            'comunicador': [
-                { id: 'cc-com-4', question: "¿Qué debe contener un comunicado de crisis?", options: ["Excusas", "Transparencia y acciones tomadas", "Nada"], answer: "Transparencia y acciones tomadas" },
-                { id: 'cc-com-5', question: "¿Cuál es el objetivo de un plan de comunicación?", options: ["Controlar la narrativa", "Esconder información", "Culpar a terceros"], answer: "Controlar la narrativa" },
-                { id: 'cc-com-6', question: "¿Qué canal es más rápido para informar?", options: ["Email", "Vallas publicitarias", "Redes sociales personales"], answer: "Email" }
-            ]
-        }
-    },
-
-    
     'evacuacion-parcial-completa': {
     name: 'Evacuación Parcial - Roles y Acciones',
     description: 'Protocolo de actuación para cada operador en un incidente de evacuación parcial. Las preguntas siguen el orden de las acciones.',
@@ -1003,6 +968,167 @@ const gameData = {
         ]
     }
 }
+
+{
+  "name": "Intrusión por Puerta de Cristal",
+  "description": "El simulacro comienza con la detección de dos personas no autorizadas que entran al almacén.",
+  "roles": {
+    "Recepcion": [
+      {
+        "id": "rec-01",
+        "question": "¿El guardia de recepción confirma visualmente la entrada de personas no autorizadas?",
+        "answer": "Sí, el guardia confirma la intrusión y emite el primer reporte por radio: 'Alerta, intrusión en Puerta de Cristal. Se mueven hacia los pasillos centrales'."
+      },
+      {
+        "id": "rec-02",
+        "question": "¿El guardia de recepción proporciona una descripción de los intrusos por radio?",
+        "answer": "Sí, describe la vestimenta y la dirección que han tomado para que los demás puntos puedan identificarlos."
+      },
+      {
+        "id": "rec-03",
+        "question": "¿El guardia de recepción asegura la entrada principal para evitar más accesos?",
+        "answer": "Sí, el guardia cierra la Puerta de Cristal y se mantiene en su posición para evitar que alguien más entre."
+      }
+    ],
+    "Pasillos_centrales": [
+      {
+        "id": "pc-01",
+        "question": "¿El guardia de Pasillos Centrales toma una posición de observación sin exponerse?",
+        "answer": "Sí, el guardia se mueve a un punto estratégico para monitorear el movimiento de los intrusos, sin confrontarlos."
+      },
+      {
+        "id": "pc-02",
+        "question": "¿El guardia de Pasillos Centrales informa por radio la ubicación y dirección de los intrusos?",
+        "answer": "Sí, comunica el movimiento en tiempo real: 'Intrusos en el pasillo principal, se dirigen al área de Outbound'."
+      },
+      {
+        "id": "pc-03",
+        "question": "¿El guardia de Pasillos Centrales guía al personal que se encuentra en el área a una zona segura?",
+        "answer": "Sí, el guardia avisa a los trabajadores y los dirige a las zonas de resguardo para que no estén en peligro."
+      }
+    ],
+    "guardia_arcos": [
+      {
+        "id": "ar-01",
+        "question": "¿Los guardias de los Arcos de Acceso y de Salida reciben la alerta de intrusión?",
+        "answer": "Sí, los guardias confirman haber recibido la alerta y se preparan para actuar."
+      },
+      {
+        "id": "ar-02",
+        "question": "¿Los guardias de los arcos bloquean las entradas y salidas del almacén?",
+        "answer": "Sí, bloquean el acceso vehicular y peatonal. Reportan por radio: 'Arcos asegurados, perímetro sellado'."
+      },
+      {
+        "id": "ar-03",
+        "question": "¿Los guardias de los arcos se mantienen en alerta por si los intrusos intentan escapar por allí?",
+        "answer": "Sí, mantienen una vigilancia constante en la zona perimetral para detectar cualquier intento de escape."
+      }
+    ],
+    "Operador_1": [
+      {
+        "id": "ob-01",
+        "question": "¿El guardia de Outbound avisa al personal de la zona sobre la emergencia?",
+        "answer": "Sí, el guardia informa al personal y lo dirige a una zona segura de resguardo."
+      },
+      {
+        "id": "ob-02",
+        "question": "¿El guardia de Outbound colabora con el equipo de respuesta?",
+        "answer": "Sí, el guardia comunica la ubicación de los intrusos y se coordina con el equipo de respuesta para asegurar el perímetro de la zona."
+      },
+      {
+        "id": "ob-03",
+        "question": "¿El guardia de Outbound se asegura de que la zona esté despejada de personal?",
+        "answer": "Sí, el guardia confirma que todo el personal ha sido evacuado o está en una zona segura. Reporta: 'Área de Outbound despejada de personal'."
+      }
+    ],
+    "guardia_inbound": [
+      {
+        "id": "ib-01",
+        "question": "¿El guardia de Inbound alerta a su personal sobre la situación?",
+        "answer": "Sí, el guardia comunica la alerta a su equipo y a los trabajadores de la zona."
+      },
+      {
+        "id": "ib-02",
+        "question": "¿El guardia de Inbound dirige al personal a una zona de confinamiento?",
+        "answer": "Sí, el guardia guía a las personas de su área a un lugar seguro para que permanezcan ahí hasta que la situación se resuelva."
+      },
+      {
+        "id": "ib-03",
+        "question": "¿El guardia de Inbound asegura que la zona esté libre de personal y materiales?",
+        "answer": "Sí, el guardia confirma que el área está segura y comunica por radio que su zona está protegida."
+      }
+    ],
+    "Operador_2": [
+      {
+        "id": "cm-01",
+        "question": "¿El guardia del comedor alerta al personal que se encuentra en el área?",
+        "answer": "Sí, el guardia avisa a las personas que están en el comedor sobre la emergencia y les pide que permanezcan en el lugar."
+      },
+      {
+        "id": "cm-02",
+        "question": "¿El guardia del comedor asegura que nadie se acerque a la zona de riesgo?",
+        "answer": "Sí, el guardia evita que el personal del comedor se dirija a la zona del incidente y se mantiene en comunicación constante."
+      },
+      {
+        "id": "cm-03",
+        "question": "¿El guardia del comedor sirve como un punto de apoyo en caso de una evacuación general?",
+        "answer": "Sí, el guardia está listo para guiar a las personas a la salida de emergencia en caso de que sea necesario evacuar todo el almacén."
+      }
+    ],
+    "operadores_monitoreo": [
+      {
+        "id": "om-01",
+        "question": "¿El primer monitorista confirma visualmente la intrusión y emite la alerta general?",
+        "answer": "Sí, el monitorista confirma la intrusión a través de las cámaras y comunica la alerta a todo el equipo de seguridad."
+      },
+      {
+        "id": "om-02",
+        "question": "¿El monitorista de seguimiento rastrea a los intrusos en tiempo real y comunica su ubicación?",
+        "answer": "Sí, el monitorista comunica constantemente la posición de los intrusos y avisa de cualquier cambio de dirección."
+      },
+      {
+        "id": "om-03",
+        "question": "¿El monitorista de apoyo se asegura de que los guardias en tierra tengan la información correcta?",
+        "answer": "Sí, el monitorista de apoyo se encarga de dar la información a los guardias de las zonas del almacén para que tomen las medidas necesarias."
+      }
+    ],
+    "Operador_3": [
+      {
+        "id": "er-01",
+        "question": "¿El equipo de respuesta se dirige al lugar de los intrusos una vez que han recibido la orden?",
+        "answer": "Sí, el equipo de respuesta se dirige a la zona de Outbound para la contención de los intrusos."
+      },
+      {
+        "id": "er-02",
+        "question": "¿El equipo de respuesta logra contener a los intrusos?",
+        "answer": "Sí, el equipo de respuesta logra establecer un perímetro de contención y asegura la zona."
+      },
+      {
+        "id": "er-03",
+        "question": "¿El líder del equipo de respuesta informa que la situación está bajo control?",
+        "answer": "Sí, el líder del equipo de respuesta informa que los intrusos han sido contenidos y que la zona está segura."
+      }
+    ],
+    "Analista": [
+      {
+        "id": "es-01",
+        "question": "¿El encargado de seguridad tiene el control total de la situación?",
+        "answer": "Sí, el encargado de seguridad recibe la información de todos los puntos de seguridad y toma las decisiones para que el simulacro sea un éxito."
+      },
+      {
+        "id": "es-02",
+        "question": "¿El encargado de seguridad da la orden de 'código seguro' por radio?",
+        "answer": "Sí, el encargado de seguridad da la orden de 'código seguro' para que todos los puntos de seguridad regresen a su rutina normal."
+      },
+      {
+        "id": "es-03",
+        "question": "¿El encargado de seguridad se reúne con todos los puntos de seguridad para evaluar el simulacro?",
+        "answer": "Sí, el encargado de seguridad se reúne con todos los puntos de seguridad para evaluar el simulacro y mejorar los protocolos."
+      }
+    ]
+  }
+}
+
 
 };
 

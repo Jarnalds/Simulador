@@ -1,5 +1,277 @@
 const gameData = {
+<<<<<<< HEAD
   'lockdown-completo': {
+=======
+      
+    'evacuacion-parcial-completa': {
+    name: 'Evacuación Parcial - Roles y Acciones',
+    description: 'Protocolo de actuación para cada operador en un incidente de evacuación parcial. Las preguntas siguen el orden de las acciones.',
+    roles: {
+        "Operador_1": [
+            {
+                id: 'op1-q1',
+                question: "¿Cuál es la primera acción del Operador 1?",
+                options: [
+                    "Llamar a emergencias",
+                    "Validar si el área evacuada incluye el CCM",
+                    "Recabar información del evento"
+                ],
+                answer: "Validar si el área evacuada incluye el CCM"
+            },
+            {
+                id: 'op1-q2',
+                question: "Si el CCM debe ser evacuado, ¿qué protocolo debe seguir el Operador 1?",
+                options: [
+                    "Mantener el rol de vocero",
+                    "Seguir el playbook de evacuación total",
+                    "Esperar instrucciones del Operador 2"
+                ],
+                answer: "Seguir el playbook de evacuación total"
+            },
+            {
+                id: 'op1-q3',
+                question: "Si el CCM no evacua, ¿cuál es el siguiente paso para el Operador 1?",
+                options: [
+                    "Colocar el seguro",
+                    "Recabar información del evento",
+                    "Escalar a LP"
+                ],
+                answer: "Recabar información del evento"
+            },
+            {
+                id: 'op1-q4',
+                question: "¿Qué acción se toma después de recabar la información del evento, si el CCM no evacúa?",
+                options: [
+                    "Llamar a emergencias",
+                    "Monitorear cámaras",
+                    "Mantener el rol de vocero"
+                ],
+                answer: "Llamar a emergencias"
+            },
+            {
+                id: 'op1-q5',
+                question: "¿A quién se realiza el escalamiento después de llamar a emergencias?",
+                options: [
+                    "Al Operador 2",
+                    "A LP (Líder del Protocolo)",
+                    "A los guardias"
+                ],
+                answer: "A LP (Líder del Protocolo)"
+            },
+            {
+                id: 'op1-q6',
+                question: "¿Cuál es la responsabilidad principal y continua del Operador 1 a lo largo del incidente?",
+                options: [
+                    "Describir la zona visualizada en voz alta",
+                    "Mantener el rol de vocero",
+                    "Informar novedades a los operadores 3 y 4"
+                ],
+                answer: "Mantener el rol de vocero"
+            }
+        ],
+        get "Operador_1"() {
+            return this["Operador_1"];
+        },
+        set "Operador_1"(value) {
+            this["Operador_1"] = value;
+        },
+        "Operador_2": [
+            {
+                id: 'op2-q1',
+                question: "¿Qué debe validar primero el Operador 2 al iniciar el protocolo?",
+                options: [
+                    "El estado de las cámaras",
+                    "El área evacuada",
+                    "La comunicación con los guardias"
+                ],
+                answer: "El área evacuada"
+            },
+            {
+                id: 'op2-q2',
+                question: "Si el CCM NO evacúa, ¿cuál es la primera acción del Operador 2?",
+                options: [
+                    "Colocar seguro",
+                    "Informar al vocero",
+                    "Monitorear cámaras"
+                ],
+                answer: "Colocar seguro"
+            },
+            {
+                id: 'op2-q3',
+                question: "Después de colocar el seguro, ¿cuál es el siguiente paso para el Operador 2?",
+                options: [
+                    "Monitorear cámaras",
+                    "Llamar a emergencias",
+                    "Escalar a LP"
+                ],
+                answer: "Monitorear cámaras"
+            },
+            {
+                id: 'op2-q4',
+                question: "¿Con quién se comunica el Operador 2 después de monitorear las cámaras?",
+                options: [
+                    "Con el vocero",
+                    "Con los guardias",
+                    "Con el Operador 3"
+                ],
+                answer: "Con los guardias"
+            },
+            {
+                id: 'op2-q5',
+                question: "¿Cuál es el propósito principal de la comunicación del Operador 2?",
+                options: [
+                    "Dar instrucciones al personal",
+                    "Describir la zona visualizada en voz alta",
+                    "Informar novedades al vocero"
+                ],
+                answer: "Informar novedades al vocero"
+            },
+            {
+                id: 'op2-q6',
+                question: "En caso de que el CCM evacúe, ¿qué debe seguir el Operador 2?",
+                options: [
+                    "El playbook de evacuación parcial",
+                    "El playbook de evacuación total",
+                    "Las instrucciones de los guardias"
+                ],
+                answer: "El playbook de evacuación total"
+            }
+        ],
+        get "Operador_2"() {
+            return this["Operador_2"];
+        },
+        set "Operador_2"(value) {
+            this["Operador_2"] = value;
+        },
+        'Operador_3': [
+            {
+                id: 'op3-q1',
+                question: "¿Cuál es la primera acción del Operador 3 al activarse el protocolo?",
+                options: [
+                    "Iniciar comunicación en voz alta",
+                    "Seguimiento de cámaras",
+                    "Validar si el CCM es evacuado"
+                ],
+                answer: "Validar si el CCM es evacuado"
+            },
+            {
+                id: 'op3-q2',
+                question: "Si el CCM no evacúa, ¿qué tipo de monitoreo de cámaras debe realizar el Operador 3?",
+                options: [
+                    "Solo monitoreo interno",
+                    "Solo monitoreo externo",
+                    "Monitoreo interno y externo"
+                ],
+                answer: "Monitoreo interno y externo"
+            },
+            {
+                id: 'op3-q3',
+                question: "¿Qué protocolo debe seguir el Operador 3 si el CCM es evacuado?",
+                options: [
+                    "El playbook total",
+                    "El playbook parcial",
+                    "Monitorear cámaras externas"
+                ],
+                answer: "El playbook total"
+            },
+            {
+                id: 'op3-q4',
+                question: "¿Cómo debe ser la comunicación del Operador 3 al describir la zona visualizada?",
+                options: [
+                    "Clara y continua",
+                    "En voz alta y constante",
+                    "A través de un chat"
+                ],
+                answer: "En voz alta y constante"
+            },
+            {
+                id: 'op3-q5',
+                question: "¿Qué tipo de información se describe durante la comunicación verbal constante?",
+                options: [
+                    "La zona visualizada",
+                    "Las novedades del Operador 2",
+                    "La causa de la emergencia"
+                ],
+                answer: "La zona visualizada"
+            },
+            {
+                id: 'op3-q6',
+                question: "¿Cuál es el rol del Operador 3 cuando el CCM no evacúa?",
+                options: [
+                    "Principalmente comunicador",
+                    "Principalmente monitorista",
+                    "Principalmente vocero"
+                ],
+                answer: "Principalmente monitorista"
+            }
+        ],
+        'Operador_4': [
+            {
+                id: 'op4-q1',
+                question: "¿Cuál es el paso inicial para el Operador 4?",
+                options: [
+                    "Comunicación clara y continua",
+                    "Validar si el CCM es evacuado",
+                    "Seguimiento con cámaras"
+                ],
+                answer: "Validar si el CCM es evacuado"
+            },
+            {
+                id: 'op4-q2',
+                question: "Si el CCM no es evacuado, ¿qué tarea principal realiza el Operador 4?",
+                options: [
+                    "Recabar información del evento",
+                    "Seguimiento con cámaras",
+                    "Llamar a emergencias"
+                ],
+                answer: "Seguimiento con cámaras"
+            },
+            {
+                id: 'op4-q3',
+                question: "¿Qué tipo de comunicación debe mantener el Operador 4?",
+                options: [
+                    "En voz alta y constante",
+                    "Silenciosa y discreta",
+                    "Clara y continua"
+                ],
+                answer: "Clara y continua"
+            },
+            {
+                id: 'op4-q4',
+                question: "¿Cuál es la responsabilidad principal del Operador 4 al monitorear las cámaras?",
+                options: [
+                    "Describir la zona visualizada",
+                    "Recabar información de los guardias",
+                    "Escalar a LP"
+                ],
+                answer: "Describir la zona visualizada"
+            },
+            {
+                id: 'op4-q5',
+                question: "¿Qué informa el Operador 4 durante su comunicación continua?",
+                options: [
+                    "La zona visualizada",
+                    "El estado del Operador 1",
+                    "El estado de los guardias"
+                ],
+                answer: "La zona visualizada"
+            },
+            {
+                id: 'op4-q6',
+                question: "En caso de que el CCM sea evacuado, ¿qué protocolo se sigue?",
+                options: [
+                    "El playbook total",
+                    "El playbook parcial",
+                    "El playbook de evacuación de cámaras"
+                ],
+                answer: "El playbook total"
+            }
+        ]
+    }
+},
+
+'lockdown-completo': {
+>>>>>>> 0eef67d (feat: completar la funcionalidad X)
     name: 'Lockdown Completo',
     description: 'Preguntas sobre el protocolo de actuación de cada operador en un incidente de lockdown completo, enfocadas en las acciones y su orden.',
     roles: {

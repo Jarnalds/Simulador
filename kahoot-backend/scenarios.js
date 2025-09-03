@@ -1,8 +1,6 @@
 const gameData = {
-<<<<<<< HEAD
   'lockdown-completo': {
-=======
-      
+     
     'evacuacion-parcial-completa': {
     name: 'Evacuación Parcial - Roles y Acciones',
     description: 'Protocolo de actuación para cada operador en un incidente de evacuación parcial. Las preguntas siguen el orden de las acciones.',

@@ -225,6 +225,7 @@ const gameData = {
       }]
     }
   },
+
   'lockdown-completo': {
     name: 'Lockdown Completo',
     description: 'Preguntas sobre el protocolo de actuación de cada operador en un incidente de lockdown completo, enfocadas en las acciones y su orden.',
@@ -275,7 +276,8 @@ const gameData = {
         ],
         answer: "Hytera / WhatsApp"
       }, {
-        question: "Después de activar el escalamiento, ¿cuál es el rol principal que el Operador 1 debe mantener?",
+        id: 'op1-q6',
+        question: "¿Después de activar el escalamiento, ¿cuál es el rol principal que el Operador 1 debe mantener?",
         options: [
           "Back up de monitoreo externo",
           "Vocero principal, compartiendo actualizaciones a personal interno MELI",
@@ -395,241 +397,134 @@ const gameData = {
       }]
     }
   },
-  {
-  "Recepcion": [
-    {
-      "id": "rec-01",
-      "question": "Confirma visualmente el acceso no autorizado.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "rec-02",
-      "question": "Proporciona una descripción de los intrusos por radio.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "rec-03",
-      "question": "Asegura la entrada principal para evitar más accesos.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    }
-  ],
-  "Pasillos_centrales": [
-    {
-      "id": "pc-01",
-      "question": "Toma una posición de observación sin exponerse.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "pc-02",
-      "question": "Informa por radio la ubicación y dirección de los intrusos.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "pc-03",
-      "question": "Guía al personal del área a una zona segura.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    }
-  ],
-  "guardia_arcos": [
-    {
-      "id": "ar-01",
-      "question": "Confirma haber recibido la alerta de intrusión.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "ar-02",
-      "question": "Bloquea las entradas y salidas del almacén.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "ar-03",
-      "question": "Se mantiene en alerta para evitar escapes.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    }
-  ],
-  "guardia_inbound": [
-    {
-      "id": "ib-01",
-      "question": "Alerta a su personal sobre la situación.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "ib-02",
-      "question": "Dirige al personal a una zona de confinamiento.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "ib-03",
-      "question": "Asegura que la zona esté libre de personal y materiales.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    }
-  ],
-  "guardia_outbound": [
-    {
-      "id": "ob-01",
-      "question": "Avisa al personal de la zona sobre la emergencia.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "ob-02",
-      "question": "Colabora con el equipo de respuesta.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "ob-03",
-      "question": "Se asegura de que la zona esté despejada de personal.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    }
-  ],
-  "Operador_1": [
-    {
-      "id": "op1-01",
-      "question": "Activa el botón de pánico.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "op1-02",
-      "question": "Recaba información general del evento.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "op1-03",
-      "question": "Llama a 911.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "op1-04",
-      "question": "Asume el rol de vocero.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    }
-  ],
-  "Operador_2": [
-    {
-      "id": "op2-01",
-      "question": "Coloca el seguro manual de la puerta del CCM.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "op2-02",
-      "question": "Informa novedades al Operador 1 (vocero).",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "op2-03",
-      "question": "Gestiona la seguridad física y el monitoreo.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    }
-  ],
-  "Operador_3": [
-    {
-      "id": "op3-01",
-      "question": "Realiza el back-up de monitoreo externo.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "op3-02",
-      "question": "Mantiene comunicación constante con el Operador 1.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "op3-03",
-      "question": "Informa sobre la situación externa en tiempo real.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    }
-  ],
-  "Operador_4": [
-    {
-      "id": "op4-01",
-      "question": "Valida si el CCM es evacuado.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "op4-02",
-      "question": "Realiza el seguimiento con cámaras.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "op4-03",
-      "question": "Mantiene comunicación clara y continua.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    }
-  ],
-  "Operadores_monitoreo": [
-    {
-      "id": "op-mon-01",
-      "question": "Monitorea las cámaras internas y externas de la zona del incidente.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "op-mon-02",
-      "question": "Mantén la comunicación verbal constante con el vocero.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "op-mon-03",
-      "question": "Asegura la grabación del evento para su posterior análisis.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    }
-  ],
-  "Analista": [
-    {
-      "id": "ana-01",
-      "question": "Registra todos los eventos en una línea de tiempo.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "ana-02",
-      "question": "Recopila datos de las cámaras, radios y registros de acceso.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "ana-03",
-      "question": "Prepara un informe detallado del incidente.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    },
-    {
-      "id": "ana-04",
-      "question": "Identifica posibles fallos en el protocolo.",
-      "options": ["Confirmado", "No confirmado"],
-      "answer": "Confirmado"
-    }
-  ]
-}
-};
 
+  'Protocolo-confirmacion': {
+    name: 'Protocolo de Seguridad',
+    description: 'Lista de verifiación de acciones clave para cada rol, con opciones de Confirmado o No confirmado.',
+    roles: {
+      "Operador_1": [{
+        id: 'op1-c1',
+        question: "Activa el botón de pánico.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }, {
+        id: 'op1-c2',
+        question: "Recaba información general del evento.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }, {
+        id: 'op1-c3',
+        question: "Llama a 911.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }, {
+        id: 'op1-c4',
+        question: "Asume el rol de vocero.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }],
+      "Operador_2": [{
+        id: 'op2-c1',
+        question: "Bloquea el acceso manual al CCM inmediatamente.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }, {
+        id: 'op2-c2',
+        question: "Informa de todas las novedades al Operador 1 (el vocero).",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }],
+      "Operador_3": [{
+        id: 'op3-c1',
+        question: "Realiza monitoreo externo y constante de las cámaras.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }, {
+        id: 'op3-c2',
+        question: "Informa de la situación externa en tiempo real.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }],
+      "Operador_4": [{
+        id: 'op4-c1',
+        question: "Monitorea las cámaras de seguridad para dar seguimiento visual.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }, {
+        id: 'op4-c2',
+        question: "Mantiene comunicación clara y continua.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }],
+      "Recepcion": [{
+        id: 'rec-c1',
+        question: "Confirma visualmente el acceso no autorizado.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }, {
+        id: 'rec-c2',
+        question: "Proporciona una descripción de los intrusos por radio.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }],
+      "Pasillos_centrales": [{
+        id: 'pc-c1',
+        question: "Toma una posición de observación sin exponerse.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }, {
+        id: 'pc-c2',
+        question: "Informa por radio la ubicación y dirección de los intrusos.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }],
+      "guardia_arcos": [{
+        id: 'ar-c1',
+        question: "Bloquea las entradas y salidas del almacén.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }, {
+        id: 'ar-c2',
+        question: "Se mantiene en alerta para evitar escapes.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }],
+      "guardia_inbound": [{
+        id: 'ib-c1',
+        question: "Alerta a su personal sobre la situación de emergencia.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }, {
+        id: 'ib-c2',
+        question: "Dirige al personal a una zona de confinamiento designada.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }],
+      "guardia_outbound": [{
+        id: 'ob-c1',
+        question: "Avisa al personal de su zona sobre la emergencia.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }, {
+        id: 'ob-c2',
+        question: "Se asegura de que el área esté despejada de personal.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }],
+      "Analista": [{
+        id: 'ana-c1',
+        question: "Registra todos los eventos en una línea de tiempo.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }, {
+        id: 'ana-c2',
+        question: "Recopila datos de cámaras, radios y registros de acceso.",
+        options: ["Confirmado", "No confirmado"],
+        answer: "Confirmado"
+      }]
+    }
+  },
+
+};
 
 module.exports = gameData;

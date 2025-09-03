@@ -269,7 +269,6 @@ const gameData = {
 },
 
 'lockdown-completo': {
->>>>>>> 0eef67d (feat: completar la funcionalidad X)
     name: 'Lockdown Completo',
     description: 'Preguntas sobre el protocolo de actuación de cada operador en un incidente de lockdown completo, enfocadas en las acciones y su orden.',
     roles: {
@@ -641,7 +640,6 @@ const gameData = {
   }
 ]
 }
-  }
 };
 
 
